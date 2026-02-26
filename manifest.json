@@ -1,0 +1,9 @@
+{
+	"id": "obsidian-journal",
+	"name": "Obsidian Journal",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "A beautiful daily journal plugin for Obsidian. Create, organize, and manage your journal entries with customizable templates and date-based folder structure.",
+	"author": "Dev",
+	"isDesktopOnly": false
+}
