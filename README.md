@@ -1,4 +1,4 @@
-# 📓 Obsidian Journal
+# 📓 Daily Journal
 
 A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, organize, and manage your journal entries with customizable templates, mood tracking, writing streaks, and a built-in calendar view.
 
@@ -71,15 +71,15 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 ### From Obsidian Community Plugins *(coming soon)*
 
 1. Open **Settings** → **Community Plugins** → **Browse**.
-2. Search for **"Obsidian Journal"**.
+2. Search for **"Daily Journal"**.
 3. Click **Install**, then **Enable**.
 
 ### Manual Installation
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/LinhDangDev/Journal-Daily-Obsidian-Plugins/releases).
-2. Create a folder: `<your-vault>/.obsidian/plugins/obsidian-journal/`.
+2. Create a folder: `<your-vault>/.obsidian/plugins/daily-journal/`.
 3. Copy the downloaded files into that folder.
-4. Open **Settings** → **Community Plugins** → Enable **"Obsidian Journal"**.
+4. Open **Settings** → **Community Plugins** → Enable **"Daily Journal"**.
 
 ### Build from Source
 
