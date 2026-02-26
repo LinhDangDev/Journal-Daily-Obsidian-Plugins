@@ -28,6 +28,7 @@ export interface JournalPluginSettings {
 	enableStreakCounter: boolean;
 	enableTemplatePicker: boolean;
 	customTemplates: CustomTemplate[];
+	dailyWordGoal: number;
 }
 
 export const DEFAULT_SETTINGS: JournalPluginSettings = {
@@ -69,6 +70,7 @@ tags: [journal]
 	enableStreakCounter: true,
 	enableTemplatePicker: false,
 	customTemplates: [],
+	dailyWordGoal: 0,
 };
 
 // --- Template Presets ---
@@ -324,6 +326,20 @@ export class JournalSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.enableTemplatePicker)
 					.onChange(async (value) => {
 						this.plugin.settings.enableTemplatePicker = value;
+						await this.saveWithFeedback();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Daily word goal")
+			.setDesc("Set a daily writing target. Shows progress in the status bar (0 to disable).")
+			.addText((text) =>
+				text
+					.setPlaceholder("0")
+					.setValue(String(this.plugin.settings.dailyWordGoal))
+					.onChange(async (value) => {
+						const num = parseInt(value, 10);
+						this.plugin.settings.dailyWordGoal = isNaN(num) || num < 0 ? 0 : num;
 						await this.saveWithFeedback();
 					}),
 			);

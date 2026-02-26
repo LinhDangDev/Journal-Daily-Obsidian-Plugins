@@ -257,6 +257,13 @@ export default class JournalPlugin extends Plugin {
 			}
 		}
 
+		if (this.settings.dailyWordGoal > 0 && hasJournal) {
+			const words = await this.journalCreator.getWordCount(today);
+			const goal = this.settings.dailyWordGoal;
+			const reached = words >= goal;
+			text += ` | ${reached ? "✅" : "✍️"} ${words}/${goal}`;
+		}
+
 		el.setText(text);
 		el.title = hasJournal
 			? "Today's journal entry exists. Click to open."

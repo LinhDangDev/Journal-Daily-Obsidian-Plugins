@@ -192,6 +192,20 @@ export class JournalCreator {
 		return content;
 	}
 
+	async getWordCount(date: Date): Promise<number> {
+		const filePath = this.getJournalPath(date);
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (!(file instanceof TFile)) return 0;
+
+		const content = await this.app.vault.cachedRead(file);
+		const noFrontmatter = content.replace(/^---[\s\S]*?---\n?/, "");
+		return noFrontmatter
+			.trim()
+			.split(/\s+/)
+			.filter((w) => w.length > 0).length;
+	}
+
+
 	private getDailyQuote(date: Date): string {
 		const dayOfYear = Math.floor(
 			(date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24),

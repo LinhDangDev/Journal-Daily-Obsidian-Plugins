@@ -1,15 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { StreakTracker } from "../streak-tracker";
 
-// Helper: create date string in YYYY-MM-DD format
-function dateStr(daysAgo: number): string {
-	const d = new Date();
-	d.setDate(d.getDate() - daysAgo);
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${y}-${m}-${day}`;
-}
 
 // Create a minimal StreakTracker for testing pure calculation methods
 // We only test calculateCurrentStreak and calculateLongestStreak with explicit sortedDates
