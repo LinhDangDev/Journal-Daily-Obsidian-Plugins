@@ -77,7 +77,7 @@ export class JournalCreator {
 		this.settings = settings;
 	}
 
-	async createOrOpen(date: Date): Promise<TFile> {
+	async createOrOpen(date: Date, templateContent?: string): Promise<TFile> {
 		const filePath = this.getJournalPath(date);
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
 
@@ -86,7 +86,7 @@ export class JournalCreator {
 		}
 
 		await this.ensureFolderExists(filePath);
-		const content = this.generateContent(date);
+		const content = this.generateContent(date, templateContent);
 		const file = await this.app.vault.create(filePath, content);
 		return file;
 	}
@@ -150,7 +150,7 @@ export class JournalCreator {
 		);
 	}
 
-	generateContent(date: Date): string {
+	generateContent(date: Date, templateContent?: string): string {
 		const year = date.getFullYear().toString();
 		const month = DateFormatter.padZero(date.getMonth() + 1);
 		const day = DateFormatter.padZero(date.getDate());
@@ -164,7 +164,7 @@ export class JournalCreator {
 
 		const quote = this.getDailyQuote(date);
 
-		let content = this.settings.templateContent;
+		let content = templateContent ?? this.settings.templateContent;
 
 		const replacements: Record<string, string> = {
 			"{{date}}": formattedDate,

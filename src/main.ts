@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, JournalPluginSettings, JournalSettingTab } from "./se
 import { JournalCreator } from "./journal-creator";
 import { JournalCalendarView, CALENDAR_VIEW_TYPE } from "./calendar-view";
 import { MoodPickerModal } from "./mood-modal";
+import { TemplatePickerModal } from "./template-picker";
 import { StreakTracker } from "./streak-tracker";
 import { JournalNavigatorModal } from "./journal-navigator";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "./constants/messages";
@@ -129,11 +130,31 @@ export default class JournalPlugin extends Plugin {
 		try {
 			const isNew = !this.journalCreator.exists(date);
 
-			if (isNew) {
-				loadingNotice = new Notice(SUCCESS_MESSAGES.CREATING_ENTRY, 0);
+			if (!isNew) {
+				// Existing file — just open it
+				const file = await this.journalCreator.createOrOpen(date);
+				await this.openFile(file);
+				new Notice(SUCCESS_MESSAGES.JOURNAL_OPENED);
+				this.refreshCalendarView();
+				return;
 			}
 
-			const file = await this.journalCreator.createOrOpen(date);
+			// --- New file flow ---
+
+			// Step 1: Template picker (if enabled)
+			let templateContent: string | undefined;
+			if (this.settings.enableTemplatePicker) {
+				const picker = new TemplatePickerModal(this.app, this.settings);
+				const picked = await picker.pickTemplate();
+				if (picked === null) {
+					return; // User cancelled — abort, no file created
+				}
+				templateContent = picked;
+			}
+
+			// Step 2: Create file
+			loadingNotice = new Notice(SUCCESS_MESSAGES.CREATING_ENTRY, 0);
+			const file = await this.journalCreator.createOrOpen(date, templateContent);
 
 			if (loadingNotice) {
 				loadingNotice.hide();
@@ -141,27 +162,19 @@ export default class JournalPlugin extends Plugin {
 			}
 
 			await this.openFile(file);
+			new Notice(SUCCESS_MESSAGES.JOURNAL_CREATED);
 
-			if (isNew) {
-				new Notice(SUCCESS_MESSAGES.JOURNAL_CREATED);
-
-				// Show mood picker for new entries
-				if (this.settings.enableMoodTracker) {
-					const modal = new MoodPickerModal(this.app);
-					const mood = await modal.pickMood();
-					if (mood) {
-						await this.journalCreator.updateMood(file, `${mood.emoji} ${mood.label}`);
-						new Notice(SUCCESS_MESSAGES.MOOD_SET(`${mood.emoji} ${mood.label}`));
-					}
+			// Step 3: Mood picker (if enabled)
+			if (this.settings.enableMoodTracker) {
+				const modal = new MoodPickerModal(this.app);
+				const mood = await modal.pickMood();
+				if (mood) {
+					await this.journalCreator.updateMood(file, `${mood.emoji} ${mood.label}`);
+					new Notice(SUCCESS_MESSAGES.MOOD_SET(`${mood.emoji} ${mood.label}`));
 				}
-			} else {
-				new Notice(SUCCESS_MESSAGES.JOURNAL_OPENED);
 			}
 
-			// Refresh calendar if it's open
 			this.refreshCalendarView();
-
-			// Status bar will be updated on next interval tick
 		} catch (error) {
 			if (loadingNotice) {
 				loadingNotice.hide();
