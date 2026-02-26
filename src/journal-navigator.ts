@@ -26,6 +26,9 @@ export class JournalNavigatorModal extends Modal {
 		// Stats cards
 		await this.renderStats(contentEl);
 
+		// Mood analytics
+		await this.renderMoodAnalytics(contentEl);
+
 		// Search bar with accessibility
 		const searchContainer = contentEl.createDiv({ cls: "journal-nav-search-container" });
 
@@ -259,6 +262,73 @@ export class JournalNavigatorModal extends Modal {
 			return `${(count / 1000).toFixed(1)}k`;
 		}
 		return String(count);
+	}
+
+	private async renderMoodAnalytics(container: HTMLElement): Promise<void> {
+		const section = container.createDiv({ cls: "journal-mood-analytics" });
+		section.createEl("h3", { text: "😊 Mood Analytics (Last 30 Days)" });
+
+		// Collect mood data for last 30 days
+		const moodMap = new Map<string, string>(); // dateStr -> mood emoji
+		for (const entry of this.allEntries) {
+			if (entry.mood) {
+				const d = new Date(entry.date);
+				const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+				moodMap.set(key, entry.mood);
+			}
+		}
+
+		// Build 30-day grid
+		const grid = section.createDiv({ cls: "journal-mood-grid-30" });
+		const distribution = new Map<string, number>();
+		const now = new Date();
+
+		for (let i = 29; i >= 0; i--) {
+			const date = new Date(now);
+			date.setDate(date.getDate() - i);
+			const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+			const dateLabel = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+			const mood = moodMap.get(key) ?? "";
+			const cell = grid.createDiv({ cls: "journal-mood-cell" });
+			cell.setText(mood || "·");
+			cell.title = `${dateLabel}: ${mood || "No mood"}`;
+
+			if (mood) {
+				distribution.set(mood, (distribution.get(mood) ?? 0) + 1);
+			}
+		}
+
+		// Distribution bars
+		if (distribution.size > 0) {
+			const distSection = section.createDiv({ cls: "journal-mood-distribution" });
+			const maxCount = Math.max(...distribution.values());
+
+			const moodColors: Record<string, string> = {
+				"😄": "#4ade80",
+				"🙂": "#60a5fa",
+				"😐": "#fbbf24",
+				"😢": "#f87171",
+				"😡": "#ef4444",
+			};
+
+			for (const [mood, count] of distribution.entries()) {
+				const bar = distSection.createDiv({ cls: "journal-mood-dist-bar" });
+				bar.createSpan({ text: mood, cls: "journal-mood-dist-emoji" });
+
+				const fill = bar.createDiv({ cls: "journal-mood-dist-fill" });
+				const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+				fill.style.width = `${pct}%`;
+				fill.style.backgroundColor = moodColors[mood] ?? "var(--text-muted)";
+
+				bar.createSpan({ text: String(count), cls: "journal-mood-dist-count" });
+			}
+		} else {
+			section.createDiv({
+				cls: "journal-mood-empty",
+				text: "No mood data yet. Track your mood when creating journal entries!",
+			});
+		}
 	}
 }
 

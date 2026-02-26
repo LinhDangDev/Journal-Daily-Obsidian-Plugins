@@ -503,6 +503,89 @@
 }
 
 /* ============================================
+   MOOD ANALYTICS
+   ============================================ */
+
+.journal-mood-analytics {
+	margin-bottom: var(--journal-gap-lg);
+	padding: var(--journal-gap-md);
+	background: var(--background-secondary);
+	border-radius: var(--journal-radius-md);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.journal-mood-analytics h3 {
+	margin: 0 0 var(--journal-gap-md) 0;
+	font-size: 14px;
+	color: var(--text-normal);
+}
+
+.journal-mood-grid-30 {
+	display: grid;
+	grid-template-columns: repeat(10, 1fr);
+	gap: 4px;
+	margin-bottom: var(--journal-gap-md);
+}
+
+.journal-mood-cell {
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	font-size: 14px;
+	background: var(--background-modifier-hover);
+	cursor: default;
+	transition: all var(--journal-transition-fast);
+}
+
+.journal-mood-cell:hover {
+	transform: scale(1.15);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.journal-mood-distribution {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.journal-mood-dist-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.journal-mood-dist-emoji {
+	font-size: 16px;
+	min-width: 24px;
+	text-align: center;
+}
+
+.journal-mood-dist-fill {
+	height: 8px;
+	border-radius: 4px;
+	transition: width 0.3s ease;
+	min-width: 4px;
+	flex: 1;
+}
+
+.journal-mood-dist-count {
+	font-size: 12px;
+	color: var(--text-muted);
+	min-width: 20px;
+	text-align: right;
+	font-weight: 600;
+}
+
+.journal-mood-empty {
+	text-align: center;
+	padding: var(--journal-gap-lg);
+	color: var(--text-muted);
+	font-size: 13px;
+}
+
+/* ============================================
    SETTINGS TAB
    ============================================ */
 
