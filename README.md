@@ -46,11 +46,18 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 - **Longest streak** — Track your personal best.
 - **Total entries & word count** — Available in the Journal Navigator.
 
+### 🎯 Daily Word Goal
+- Set a daily word count target (e.g. 300 words/day).
+- **Status bar progress** — See `✍️ 234/500` live as you write.
+- **Goal reached indicator** — Changes to `✅ 500/500` when you hit your target.
+- Disable by setting goal to `0`.
+
 ### 📚 Journal Navigator
 - Browse all journal entries in a searchable modal.
 - **Live search** — Filter entries by content, filename, or mood (debounced).
 - **Stats dashboard** — Total entries, word count, current streak, and best streak.
 - **Entry previews** — See date, mood, word count, and a text preview for each entry.
+- **Mood analytics** — 30-day mood grid and mood distribution chart.
 
 ### 💡 Daily Quotes
 - A rotating collection of 50+ inspirational quotes.
@@ -61,6 +68,7 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 - Customizable journal folder path.
 - Multiple date formats: `YYYY-MM-DD`, `DD-MM-YYYY`, `MM-DD-YYYY`, `YYYY/MM/DD`, `DD.MM.YYYY`.
 - Toggle features on/off: mood tracker, daily quotes, streak counter, template picker.
+- **Daily word goal** — Set a writing target with status bar progress tracking.
 - Open journal on Obsidian startup (optional).
 - Show/hide ribbon icon.
 
@@ -187,6 +195,16 @@ This watches for file changes and automatically rebuilds `main.js`.
 npm run build
 ```
 
+### Lint & Test
+
+```bash
+npm run lint        # ESLint check
+npm run lint:fix    # ESLint auto-fix
+npm run format      # Prettier format
+npm test            # Run Vitest unit tests
+npm run test:watch  # Watch mode
+```
+
 ### Project Structure
 
 ```
@@ -195,14 +213,18 @@ src/
 ├── settings.ts          # Settings UI, template presets, and data types
 ├── journal-creator.ts   # Journal file creation and template rendering
 ├── calendar-view.ts     # Calendar sidebar view with mood dots
-├── journal-navigator.ts # Searchable journal browser with stats
+├── journal-navigator.ts # Searchable journal browser with stats + mood analytics
 ├── mood-modal.ts        # Mood picker modal
 ├── template-picker.ts   # Template picker modal
 ├── streak-tracker.ts    # Writing streak calculator
 ├── constants/
 │   └── messages.ts      # Centralized UI messages
-└── utils/
-    └── date-formatter.ts # Date formatting utilities
+├── utils/
+│   └── date-formatter.ts # Date formatting utilities
+├── __tests__/
+│   └── streak-tracker.test.ts  # StreakTracker unit tests
+└── utils/__tests__/
+    └── date-formatter.test.ts  # DateFormatter unit tests
 ```
 
 ---
