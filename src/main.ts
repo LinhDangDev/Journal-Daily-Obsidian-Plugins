@@ -20,10 +20,7 @@ export default class JournalPlugin extends Plugin {
 		this.streakTracker = new StreakTracker(this.app, this.settings);
 
 		// --- Register Calendar View ---
-		this.registerView(
-			CALENDAR_VIEW_TYPE,
-			(leaf) => new JournalCalendarView(leaf, this)
-		);
+		this.registerView(CALENDAR_VIEW_TYPE, (leaf) => new JournalCalendarView(leaf, this));
 
 		// --- Ribbon Icon ---
 		if (this.settings.showRibbonIcon) {
@@ -38,7 +35,7 @@ export default class JournalPlugin extends Plugin {
 
 		// Update status bar every minute (properly registered for cleanup)
 		this.registerInterval(
-			window.setInterval(() => this.updateStatusBar(statusBarItemEl), 60 * 1000)
+			window.setInterval(() => this.updateStatusBar(statusBarItemEl), 60 * 1000),
 		);
 
 		// --- Commands ---
@@ -280,7 +277,7 @@ export default class JournalPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<JournalPluginSettings>
+			(await this.loadData()) as Partial<JournalPluginSettings>,
 		);
 	}
 

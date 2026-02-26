@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App } from "obsidian";
 import type { JournalPluginSettings } from "./settings";
 import { DateFormatter } from "./utils/date-formatter";
 
@@ -143,7 +143,10 @@ export class StreakTracker {
 				try {
 					const content = await this.app.vault.cachedRead(file);
 					const noFrontmatter = content.replace(/^---[\s\S]*?---\n?/, "");
-					const words = noFrontmatter.trim().split(/\s+/).filter((w) => w.length > 0);
+					const words = noFrontmatter
+						.trim()
+						.split(/\s+/)
+						.filter((w) => w.length > 0);
 					totalWords += words.length;
 				} catch {
 					// Skip files that can't be read

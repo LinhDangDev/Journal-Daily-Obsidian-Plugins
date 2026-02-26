@@ -83,8 +83,18 @@ export class JournalCalendarView extends ItemView {
 			cls: "journal-cal-month-label",
 		});
 		const monthNames = [
-			"January", "February", "March", "April", "May", "June",
-			"July", "August", "September", "October", "November", "December",
+			"January",
+			"February",
+			"March",
+			"April",
+			"May",
+			"June",
+			"July",
+			"August",
+			"September",
+			"October",
+			"November",
+			"December",
 		];
 		const monthName = monthNames[this.currentMonth.getMonth()] ?? "";
 		monthLabel.setText(`${monthName} ${this.currentMonth.getFullYear()}`);
@@ -169,9 +179,11 @@ export class JournalCalendarView extends ItemView {
 			}
 
 			// Future days
-			if (year > today.getFullYear() ||
+			if (
+				year > today.getFullYear() ||
 				(year === today.getFullYear() && month > today.getMonth()) ||
-				(isCurrentMonth && day > today.getDate())) {
+				(isCurrentMonth && day > today.getDate())
+			) {
 				dayEl.addClass("journal-cal-day-future");
 			}
 
@@ -196,11 +208,12 @@ export class JournalCalendarView extends ItemView {
 		const daysInMonth = lastDay.getDate();
 		const daysPassedInMonth = isCurrentMonth
 			? today.getDate()
-			: (month < today.getMonth() || year < today.getFullYear() ? daysInMonth : 0);
+			: month < today.getMonth() || year < today.getFullYear()
+				? daysInMonth
+				: 0;
 
-		const percentage = daysPassedInMonth > 0
-			? Math.round((totalInMonth / daysPassedInMonth) * 100)
-			: 0;
+		const percentage =
+			daysPassedInMonth > 0 ? Math.round((totalInMonth / daysPassedInMonth) * 100) : 0;
 
 		stats.createDiv({
 			cls: "journal-cal-stat",
@@ -231,7 +244,7 @@ export class JournalCalendarView extends ItemView {
 			this.app.vault
 				.getMarkdownFiles()
 				.filter((f) => f.path.startsWith(settings.journalFolder + "/"))
-				.map((f) => f.path)
+				.map((f) => f.path),
 		);
 
 		for (let day = 1; day <= daysInMonth; day++) {
@@ -245,7 +258,7 @@ export class JournalCalendarView extends ItemView {
 				.replace("DD", d);
 
 			const filePath = normalizePath(
-				`${settings.journalFolder}/${y}/${m}/${formattedDate}.md`
+				`${settings.journalFolder}/${y}/${m}/${formattedDate}.md`,
 			);
 
 			if (journalFiles.has(filePath)) {
@@ -282,7 +295,7 @@ export class JournalCalendarView extends ItemView {
 				.replace("DD", d);
 
 			const filePath = normalizePath(
-				`${settings.journalFolder}/${y}/${m}/${formattedDate}.md`
+				`${settings.journalFolder}/${y}/${m}/${formattedDate}.md`,
 			);
 
 			const file = this.app.vault.getAbstractFileByPath(filePath);

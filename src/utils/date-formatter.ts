@@ -8,10 +8,7 @@ export class DateFormatter {
 		const month = DateFormatter.padZero(date.getMonth() + 1);
 		const day = DateFormatter.padZero(date.getDate());
 
-		return format
-			.replace("YYYY", year)
-			.replace("MM", month)
-			.replace("DD", day);
+		return format.replace("YYYY", year).replace("MM", month).replace("DD", day);
 	}
 
 	static padZero(num: number): string {

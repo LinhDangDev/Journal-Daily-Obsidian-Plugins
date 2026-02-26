@@ -119,12 +119,17 @@ export class JournalNavigatorModal extends Modal {
 					const cache = this.app.metadataCache.getFileCache(file);
 
 					const noFrontmatter = content.replace(/^---[\s\S]*?---\n?/, "");
-					const lines = noFrontmatter.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+					const lines = noFrontmatter
+						.split("\n")
+						.filter((l) => l.trim() && !l.startsWith("#"));
 					const preview = lines.slice(0, 3).join(" ").substring(0, 150);
 
 					const mood = (cache?.frontmatter?.["mood"] as string) ?? "";
 
-					const words = noFrontmatter.trim().split(/\s+/).filter((w) => w.length > 0).length;
+					const words = noFrontmatter
+						.trim()
+						.split(/\s+/)
+						.filter((w) => w.length > 0).length;
 
 					this.allEntries.push({
 						file,

@@ -248,7 +248,9 @@ export class JournalSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Journal folder")
-			.setDesc("Root folder for your journal entries. Subfolders will be created by year/month.")
+			.setDesc(
+				"Root folder for your journal entries. Subfolders will be created by year/month.",
+			)
 			.addText((text) =>
 				text
 					.setPlaceholder("Journal")
@@ -262,7 +264,7 @@ export class JournalSettingTab extends PluginSettingTab {
 						}
 						this.plugin.settings.journalFolder = normalized;
 						await this.saveWithFeedback();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -286,24 +288,20 @@ export class JournalSettingTab extends PluginSettingTab {
 			.setName("Mood tracker")
 			.setDesc("Show a mood picker when creating a new journal entry.")
 			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.enableMoodTracker)
-					.onChange(async (value) => {
-						this.plugin.settings.enableMoodTracker = value;
-						await this.saveWithFeedback();
-					})
+				toggle.setValue(this.plugin.settings.enableMoodTracker).onChange(async (value) => {
+					this.plugin.settings.enableMoodTracker = value;
+					await this.saveWithFeedback();
+				}),
 			);
 
 		new Setting(containerEl)
 			.setName("Daily quote")
 			.setDesc("Include an inspirational quote in new entries via {{quote}} variable.")
 			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.enableDailyQuote)
-					.onChange(async (value) => {
-						this.plugin.settings.enableDailyQuote = value;
-						await this.saveWithFeedback();
-					})
+				toggle.setValue(this.plugin.settings.enableDailyQuote).onChange(async (value) => {
+					this.plugin.settings.enableDailyQuote = value;
+					await this.saveWithFeedback();
+				}),
 			);
 
 		new Setting(containerEl)
@@ -315,7 +313,7 @@ export class JournalSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.enableStreakCounter = value;
 						await this.saveWithFeedback();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -327,7 +325,7 @@ export class JournalSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.enableTemplatePicker = value;
 						await this.saveWithFeedback();
-					})
+					}),
 			);
 
 		// --- Custom Templates ---
@@ -342,20 +340,14 @@ export class JournalSettingTab extends PluginSettingTab {
 				.setName(`${template.icon} ${template.name}`)
 				.setDesc("Custom template")
 				.addButton((button) =>
-					button
-						.setButtonText("Edit")
-						.onClick(() => {
-							new CustomTemplateEditorModal(
-								this.app,
-								template,
-								async (updated) => {
-									this.plugin.settings.customTemplates[i] = updated;
-									await this.plugin.saveSettings();
-									this.display();
-									new Notice("✅ Template updated");
-								}
-							).open();
-						})
+					button.setButtonText("Edit").onClick(() => {
+						new CustomTemplateEditorModal(this.app, template, async (updated) => {
+							this.plugin.settings.customTemplates[i] = updated;
+							await this.plugin.saveSettings();
+							this.display();
+							new Notice("✅ Template updated");
+						}).open();
+					}),
 				)
 				.addButton((button) =>
 					button
@@ -364,7 +356,7 @@ export class JournalSettingTab extends PluginSettingTab {
 						.onClick(async () => {
 							const confirmed = await this.showConfirmationModal(
 								"Delete Template?",
-								`Delete "${template.name}"? This cannot be undone.`
+								`Delete "${template.name}"? This cannot be undone.`,
 							);
 							if (confirmed) {
 								this.plugin.settings.customTemplates.splice(i, 1);
@@ -372,7 +364,7 @@ export class JournalSettingTab extends PluginSettingTab {
 								this.display();
 								new Notice("✅ Template deleted");
 							}
-						})
+						}),
 				);
 		}
 
@@ -391,17 +383,13 @@ export class JournalSettingTab extends PluginSettingTab {
 							icon: "📄",
 							content: DEFAULT_SETTINGS.templateContent,
 						};
-						new CustomTemplateEditorModal(
-							this.app,
-							newTemplate,
-							async (saved) => {
-								this.plugin.settings.customTemplates.push(saved);
-								await this.plugin.saveSettings();
-								this.display();
-								new Notice("✅ Template added");
-							}
-						).open();
-					})
+						new CustomTemplateEditorModal(this.app, newTemplate, async (saved) => {
+							this.plugin.settings.customTemplates.push(saved);
+							await this.plugin.saveSettings();
+							this.display();
+							new Notice("✅ Template added");
+						}).open();
+					}),
 			);
 
 		// --- Behavior Settings ---
@@ -411,24 +399,20 @@ export class JournalSettingTab extends PluginSettingTab {
 			.setName("Open journal on startup")
 			.setDesc("Automatically open today's journal entry when Obsidian starts.")
 			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.openOnStartup)
-					.onChange(async (value) => {
-						this.plugin.settings.openOnStartup = value;
-						await this.saveWithFeedback();
-					})
+				toggle.setValue(this.plugin.settings.openOnStartup).onChange(async (value) => {
+					this.plugin.settings.openOnStartup = value;
+					await this.saveWithFeedback();
+				}),
 			);
 
 		new Setting(containerEl)
 			.setName("Show ribbon icon")
 			.setDesc("Show the journal icon in the left sidebar. (Restart required)")
 			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showRibbonIcon)
-					.onChange(async (value) => {
-						this.plugin.settings.showRibbonIcon = value;
-						await this.saveWithFeedback();
-					})
+				toggle.setValue(this.plugin.settings.showRibbonIcon).onChange(async (value) => {
+					this.plugin.settings.showRibbonIcon = value;
+					await this.saveWithFeedback();
+				}),
 			);
 
 		// --- Template Settings ---
@@ -457,7 +441,7 @@ export class JournalSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Journal template")
 			.setDesc(
-				"Template for new journal entries. Variables: {{date}}, {{time}}, {{dayOfWeek}}, {{year}}, {{month}}, {{monthName}}, {{day}}, {{quote}}"
+				"Template for new journal entries. Variables: {{date}}, {{time}}, {{dayOfWeek}}, {{year}}, {{month}}, {{monthName}}, {{day}}, {{quote}}",
 			)
 			.addTextArea((text) => {
 				text.inputEl.rows = 20;
@@ -465,8 +449,7 @@ export class JournalSettingTab extends PluginSettingTab {
 				text.inputEl.style.width = "100%";
 				text.inputEl.style.fontFamily = "monospace";
 				text.inputEl.style.fontSize = "12px";
-				text
-					.setPlaceholder("Enter your journal template...")
+				text.setPlaceholder("Enter your journal template...")
 					.setValue(this.plugin.settings.templateContent)
 					.onChange(async (value) => {
 						this.plugin.settings.templateContent = value;
@@ -485,7 +468,7 @@ export class JournalSettingTab extends PluginSettingTab {
 					.onClick(async () => {
 						const confirmed = await this.showConfirmationModal(
 							"Reset Template?",
-							"This will replace your current template with the default. This action cannot be undone."
+							"This will replace your current template with the default. This action cannot be undone.",
 						);
 						if (confirmed) {
 							this.plugin.settings.templateContent = DEFAULT_SETTINGS.templateContent;
@@ -493,14 +476,16 @@ export class JournalSettingTab extends PluginSettingTab {
 							this.display();
 							new Notice(SUCCESS_MESSAGES.TEMPLATE_RESET);
 						}
-					})
+					}),
 			);
 	}
 
 	/**
 	 * Save settings with user feedback notice.
 	 */
-	private async saveWithFeedback(message: string = SUCCESS_MESSAGES.SETTINGS_SAVED): Promise<void> {
+	private async saveWithFeedback(
+		message: string = SUCCESS_MESSAGES.SETTINGS_SAVED,
+	): Promise<void> {
 		await this.plugin.saveSettings();
 		new Notice(message, 2000);
 	}
@@ -566,24 +551,21 @@ class CustomTemplateEditorModal extends Modal {
 
 		contentEl.createEl("h2", { text: "Edit Template" });
 
-		new Setting(contentEl)
-			.setName("Name")
-			.addText((text) =>
-				text
-					.setPlaceholder("Template name")
-					.setValue(this.template.name)
-					.onChange((value) => {
-						this.template.name = value;
-					})
-			);
+		new Setting(contentEl).setName("Name").addText((text) =>
+			text
+				.setPlaceholder("Template name")
+				.setValue(this.template.name)
+				.onChange((value) => {
+					this.template.name = value;
+				}),
+		);
 
 		new Setting(contentEl)
 			.setName("Icon")
 			.setDesc("Single emoji for the template card.")
 			.addText((text) => {
 				text.inputEl.style.width = "60px";
-				text
-					.setPlaceholder("📄")
+				text.setPlaceholder("📄")
 					.setValue(this.template.icon)
 					.onChange((value) => {
 						this.template.icon = value;
@@ -592,14 +574,15 @@ class CustomTemplateEditorModal extends Modal {
 
 		new Setting(contentEl)
 			.setName("Content")
-			.setDesc("Template content. Variables: {{date}}, {{time}}, {{dayOfWeek}}, {{year}}, {{month}}, {{monthName}}, {{day}}, {{quote}}")
+			.setDesc(
+				"Template content. Variables: {{date}}, {{time}}, {{dayOfWeek}}, {{year}}, {{month}}, {{monthName}}, {{day}}, {{quote}}",
+			)
 			.addTextArea((text) => {
 				text.inputEl.rows = 15;
 				text.inputEl.style.width = "100%";
 				text.inputEl.style.fontFamily = "monospace";
 				text.inputEl.style.fontSize = "12px";
-				text
-					.setPlaceholder("Enter template content...")
+				text.setPlaceholder("Enter template content...")
 					.setValue(this.template.content)
 					.onChange((value) => {
 						this.template.content = value;

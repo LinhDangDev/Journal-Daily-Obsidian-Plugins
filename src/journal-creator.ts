@@ -3,12 +3,28 @@ import type { JournalPluginSettings } from "./settings";
 import { DateFormatter } from "./utils/date-formatter";
 
 const DAYS_OF_WEEK_EN = [
-	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday",
 ];
 
 const MONTHS_EN = [
-	"January", "February", "March", "April", "May", "June",
-	"July", "August", "September", "October", "November", "December",
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
 ];
 
 const DAILY_QUOTES: string[] = [
@@ -102,23 +118,17 @@ export class JournalCreator {
 			// Try to update existing mood field
 			let updated = content.replace(
 				/^(---[\s\S]*?)(mood:\s*"[^"]*")([\s\S]*?---)/m,
-				`$1mood: "${moodText}"$3`
+				`$1mood: "${moodText}"$3`,
 			);
 
 			// If no mood field exists, add it after date
 			if (updated === content) {
-				updated = content.replace(
-					/(date:\s*"[^"]*")/,
-					`$1\nmood: "${moodText}"`
-				);
+				updated = content.replace(/(date:\s*"[^"]*")/, `$1\nmood: "${moodText}"`);
 			}
 
 			// If still no change (no frontmatter?), insert mood at top
 			if (updated === content && content.startsWith("---")) {
-				updated = content.replace(
-					/^(---\n)/,
-					`$1mood: "${moodText}"\n`
-				);
+				updated = content.replace(/^(---\n)/, `$1mood: "${moodText}"\n`);
 			}
 
 			if (updated === content) {
@@ -145,9 +155,7 @@ export class JournalCreator {
 		const month = DateFormatter.padZero(date.getMonth() + 1);
 		const formattedDate = DateFormatter.formatDate(date, this.settings.dateFormat);
 
-		return normalizePath(
-			`${this.settings.journalFolder}/${year}/${month}/${formattedDate}.md`
-		);
+		return normalizePath(`${this.settings.journalFolder}/${year}/${month}/${formattedDate}.md`);
 	}
 
 	generateContent(date: Date, templateContent?: string): string {
@@ -186,7 +194,7 @@ export class JournalCreator {
 
 	private getDailyQuote(date: Date): string {
 		const dayOfYear = Math.floor(
-			(date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)
+			(date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24),
 		);
 		const index = dayOfYear % DAILY_QUOTES.length;
 		return DAILY_QUOTES[index] ?? DAILY_QUOTES[0] ?? "";
