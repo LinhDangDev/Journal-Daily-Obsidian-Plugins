@@ -2,6 +2,21 @@ import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import type JournalPlugin from "./main";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "./constants/messages";
 
+export interface CustomTemplate {
+	id: string;
+	name: string;
+	icon: string;
+	content: string;
+}
+
+export interface TemplateEntry {
+	id: string;
+	name: string;
+	icon: string;
+	content: string;
+	isBuiltIn: boolean;
+}
+
 export interface JournalPluginSettings {
 	journalFolder: string;
 	dateFormat: string;
@@ -11,6 +26,8 @@ export interface JournalPluginSettings {
 	enableMoodTracker: boolean;
 	enableDailyQuote: boolean;
 	enableStreakCounter: boolean;
+	enableTemplatePicker: boolean;
+	customTemplates: CustomTemplate[];
 }
 
 export const DEFAULT_SETTINGS: JournalPluginSettings = {
@@ -50,16 +67,20 @@ tags: [journal]
 	enableMoodTracker: true,
 	enableDailyQuote: true,
 	enableStreakCounter: true,
+	enableTemplatePicker: false,
+	customTemplates: [],
 };
 
 // --- Template Presets ---
-export const TEMPLATE_PRESETS: Record<string, { name: string; content: string }> = {
+export const TEMPLATE_PRESETS: Record<string, { name: string; icon: string; content: string }> = {
 	default: {
-		name: "📝 Default — Full Journal",
+		name: "Full Journal",
+		icon: "📝",
 		content: DEFAULT_SETTINGS.templateContent,
 	},
 	minimal: {
-		name: "✏️ Minimal",
+		name: "Minimal",
+		icon: "✏️",
 		content: `---
 date: "{{date}}"
 mood: ""
@@ -79,7 +100,8 @@ tags: [journal]
 `,
 	},
 	gratitude: {
-		name: "🙏 Gratitude Journal",
+		name: "Gratitude Journal",
+		icon: "🙏",
 		content: `---
 date: "{{date}}"
 day: "{{dayOfWeek}}"
@@ -108,7 +130,8 @@ tags: [journal, gratitude]
 `,
 	},
 	bullet: {
-		name: "📋 Bullet Journal",
+		name: "Bullet Journal",
+		icon: "📋",
 		content: `---
 date: "{{date}}"
 day: "{{dayOfWeek}}"
@@ -140,7 +163,8 @@ tags: [journal, bullet]
 `,
 	},
 	weekly: {
-		name: "📆 Weekly Review",
+		name: "Weekly Review",
+		icon: "📆",
 		content: `---
 date: "{{date}}"
 day: "{{dayOfWeek}}"
@@ -178,6 +202,23 @@ tags: [journal, weekly-review]
 `,
 	},
 };
+
+export function getAllTemplates(settings: JournalPluginSettings): TemplateEntry[] {
+	const builtIn: TemplateEntry[] = Object.entries(TEMPLATE_PRESETS).map(([id, preset]) => ({
+		id,
+		name: preset.name,
+		icon: preset.icon,
+		content: preset.content,
+		isBuiltIn: true,
+	}));
+
+	const custom: TemplateEntry[] = settings.customTemplates.map((t) => ({
+		...t,
+		isBuiltIn: false,
+	}));
+
+	return [...builtIn, ...custom];
+}
 
 const DATE_FORMAT_OPTIONS: Record<string, string> = {
 	"YYYY-MM-DD": "2026-02-26 (ISO)",
@@ -274,6 +315,92 @@ export class JournalSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.enableStreakCounter = value;
 						await this.saveWithFeedback();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Template picker")
+			.setDesc("Show a template picker when creating a new journal entry.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.enableTemplatePicker)
+					.onChange(async (value) => {
+						this.plugin.settings.enableTemplatePicker = value;
+						await this.saveWithFeedback();
+					})
+			);
+
+		// --- Custom Templates ---
+		containerEl.createEl("h3", { text: "📄 Custom Templates" });
+
+		// List existing custom templates
+		for (let i = 0; i < this.plugin.settings.customTemplates.length; i++) {
+			const template = this.plugin.settings.customTemplates[i];
+			if (!template) continue;
+
+			new Setting(containerEl)
+				.setName(`${template.icon} ${template.name}`)
+				.setDesc("Custom template")
+				.addButton((button) =>
+					button
+						.setButtonText("Edit")
+						.onClick(() => {
+							new CustomTemplateEditorModal(
+								this.app,
+								template,
+								async (updated) => {
+									this.plugin.settings.customTemplates[i] = updated;
+									await this.plugin.saveSettings();
+									this.display();
+									new Notice("✅ Template updated");
+								}
+							).open();
+						})
+				)
+				.addButton((button) =>
+					button
+						.setButtonText("Delete")
+						.setWarning()
+						.onClick(async () => {
+							const confirmed = await this.showConfirmationModal(
+								"Delete Template?",
+								`Delete "${template.name}"? This cannot be undone.`
+							);
+							if (confirmed) {
+								this.plugin.settings.customTemplates.splice(i, 1);
+								await this.plugin.saveSettings();
+								this.display();
+								new Notice("✅ Template deleted");
+							}
+						})
+				);
+		}
+
+		// Add new custom template button
+		new Setting(containerEl)
+			.setName("Add custom template")
+			.setDesc("Create a new template for the template picker.")
+			.addButton((button) =>
+				button
+					.setButtonText("+ Add")
+					.setCta()
+					.onClick(() => {
+						const newTemplate: CustomTemplate = {
+							id: Date.now().toString(36),
+							name: "New Template",
+							icon: "📄",
+							content: DEFAULT_SETTINGS.templateContent,
+						};
+						new CustomTemplateEditorModal(
+							this.app,
+							newTemplate,
+							async (saved) => {
+								this.plugin.settings.customTemplates.push(saved);
+								await this.plugin.saveSettings();
+								this.display();
+								new Notice("✅ Template added");
+							}
+						).open();
 					})
 			);
 
@@ -417,5 +544,91 @@ export class JournalSettingTab extends PluginSettingTab {
 
 			modal.open();
 		});
+	}
+}
+
+/**
+ * Modal for editing a custom template's name, icon, and content.
+ */
+class CustomTemplateEditorModal extends Modal {
+	private template: CustomTemplate;
+	private onSave: (template: CustomTemplate) => void;
+
+	constructor(app: App, template: CustomTemplate, onSave: (template: CustomTemplate) => void) {
+		super(app);
+		this.template = { ...template };
+		this.onSave = onSave;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+
+		contentEl.createEl("h2", { text: "Edit Template" });
+
+		new Setting(contentEl)
+			.setName("Name")
+			.addText((text) =>
+				text
+					.setPlaceholder("Template name")
+					.setValue(this.template.name)
+					.onChange((value) => {
+						this.template.name = value;
+					})
+			);
+
+		new Setting(contentEl)
+			.setName("Icon")
+			.setDesc("Single emoji for the template card.")
+			.addText((text) => {
+				text.inputEl.style.width = "60px";
+				text
+					.setPlaceholder("📄")
+					.setValue(this.template.icon)
+					.onChange((value) => {
+						this.template.icon = value;
+					});
+			});
+
+		new Setting(contentEl)
+			.setName("Content")
+			.setDesc("Template content. Variables: {{date}}, {{time}}, {{dayOfWeek}}, {{year}}, {{month}}, {{monthName}}, {{day}}, {{quote}}")
+			.addTextArea((text) => {
+				text.inputEl.rows = 15;
+				text.inputEl.style.width = "100%";
+				text.inputEl.style.fontFamily = "monospace";
+				text.inputEl.style.fontSize = "12px";
+				text
+					.setPlaceholder("Enter template content...")
+					.setValue(this.template.content)
+					.onChange((value) => {
+						this.template.content = value;
+					});
+			});
+
+		const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
+		buttonContainer.style.display = "flex";
+		buttonContainer.style.justifyContent = "flex-end";
+		buttonContainer.style.gap = "8px";
+		buttonContainer.style.marginTop = "16px";
+
+		const cancelBtn = buttonContainer.createEl("button", { text: "Cancel" });
+		cancelBtn.addEventListener("click", () => {
+			this.close();
+		});
+
+		const saveBtn = buttonContainer.createEl("button", {
+			text: "Save",
+			cls: "mod-cta",
+		});
+		saveBtn.addEventListener("click", () => {
+			this.onSave(this.template);
+			this.close();
+		});
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
 	}
 }

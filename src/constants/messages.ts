@@ -16,5 +16,6 @@ export const SUCCESS_MESSAGES = {
 	MOOD_UPDATED: (mood: string) => `Mood updated: ${mood}`,
 	SETTINGS_SAVED: "✅ Settings saved",
 	TEMPLATE_RESET: "✅ Template reset to default",
+	TEMPLATE_SELECTED: (name: string) => `📄 Template: ${name}`,
 	CREATING_ENTRY: "Creating journal entry...",
 } as const;
