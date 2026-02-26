@@ -1,7 +1,7 @@
 {
-    "name": "obsidian-journal",
+    "name": "daily-journal",
     "version": "1.0.0",
-    "description": "A beautiful daily journal plugin for Obsidian",
+    "description": "Create, organize, and manage daily journal entries with customizable templates, mood tracking, and date-based folder structure.",
     "main": "main.js",
     "type": "module",
     "scripts": {
