@@ -2,7 +2,7 @@ import { App, Modal } from "obsidian";
 import type { JournalPluginSettings } from "./settings";
 import { MOOD_OPTIONS } from "./mood-modal";
 import type { MoodOption } from "./mood-modal";
-import { ENERGY_OPTIONS, TRIGGER_CATEGORIES } from "./constants/emotions";
+import { ENERGY_OPTIONS, TRIGGER_CATEGORIES, EMOTION_TAGS } from "./constants/emotions";
 import type { EnergyLevel } from "./constants/emotions";
 
 export interface ExtendedMoodData {
@@ -266,7 +266,7 @@ export class ExtendedMoodModal extends Modal {
 		const selected = new Set<string>();
 		const emotionList = this.settings.customEmotionTags.length > 0
 			? this.settings.customEmotionTags
-			: this.settings.customEmotionTags;
+			: EMOTION_TAGS;
 
 		for (const emotion of emotionList) {
 			const pill = grid.createDiv({ cls: "journal-emotion-pill", text: emotion });
