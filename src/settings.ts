@@ -1,6 +1,7 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import type JournalPlugin from "./main";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "./constants/messages";
+import { EMOTION_TAGS, TRIGGER_CATEGORIES } from "./constants/emotions";
 
 export interface CustomTemplate {
 	id: string;
@@ -29,6 +30,41 @@ export interface JournalPluginSettings {
 	enableTemplatePicker: boolean;
 	customTemplates: CustomTemplate[];
 	dailyWordGoal: number;
+
+	// --- Phase 1: Advanced Mood ---
+	enableEnergyTracking: boolean;
+	enableStressTracking: boolean;
+	enableEmotionTags: boolean;
+	enableMoodTriggers: boolean;
+	customEmotionTags: string[];
+	customTriggerCategories: string[];
+
+	// --- Phase 2: Gamification ---
+	enableAchievements: boolean;
+	enableWritingHeatmap: boolean;
+	heatmapColorTheme: "green" | "blue" | "purple" | "orange";
+	heatmapIntensityThresholds: number[];
+	enableWritingChallenges: boolean;
+
+	// --- Phase 3: Calendar ---
+	defaultCalendarView: "month" | "week" | "year" | "timeline";
+
+	// --- Phase 5: Smart Templates ---
+	enableSmartPrompts: boolean;
+	enableAutoTagging: boolean;
+	enableTemplateScheduling: boolean;
+
+	// --- Phase 6: Export & Wellness ---
+	enableAutoBackup: boolean;
+	backupFolder: string;
+	backupFrequency: "daily" | "weekly" | "monthly";
+	maxBackups: number;
+	enableWellnessPrompts: boolean;
+	enableHabitTracking: boolean;
+	habits: string[];
+	customMoodEmojis: string[];
+	calendarColorTheme: "default" | "blue" | "purple" | "orange";
+	statusBarComponents: { streak: boolean; wordCount: boolean; mood: boolean; level: boolean };
 }
 
 export const DEFAULT_SETTINGS: JournalPluginSettings = {
@@ -71,6 +107,41 @@ tags: [journal]
 	enableTemplatePicker: false,
 	customTemplates: [],
 	dailyWordGoal: 0,
+
+	// Phase 1
+	enableEnergyTracking: true,
+	enableStressTracking: true,
+	enableEmotionTags: true,
+	enableMoodTriggers: true,
+	customEmotionTags: [...EMOTION_TAGS],
+	customTriggerCategories: TRIGGER_CATEGORIES.map((t) => t.id),
+
+	// Phase 2
+	enableAchievements: true,
+	enableWritingHeatmap: true,
+	heatmapColorTheme: "green",
+	heatmapIntensityThresholds: [1, 50, 150, 300],
+	enableWritingChallenges: true,
+
+	// Phase 3
+	defaultCalendarView: "month",
+
+	// Phase 5
+	enableSmartPrompts: true,
+	enableAutoTagging: false,
+	enableTemplateScheduling: false,
+
+	// Phase 6
+	enableAutoBackup: false,
+	backupFolder: "Journal-Backups",
+	backupFrequency: "weekly",
+	maxBackups: 10,
+	enableWellnessPrompts: true,
+	enableHabitTracking: false,
+	habits: ["Exercise", "Meditation", "Reading"],
+	customMoodEmojis: [],
+	calendarColorTheme: "default",
+	statusBarComponents: { streak: true, wordCount: true, mood: false, level: false },
 };
 
 // --- Template Presets ---
@@ -339,9 +410,113 @@ export class JournalSettingTab extends PluginSettingTab {
 					.setValue(String(this.plugin.settings.dailyWordGoal))
 					.onChange(async (value) => {
 						const num = parseInt(value, 10);
-						this.plugin.settings.dailyWordGoal = isNaN(num) || num < 0 ? 0 : num;
+						this.plugin.settings.dailyWordGoal = Number.isNaN(num) || num < 0 ? 0 : num;
 						await this.saveWithFeedback();
 					}),
+			);
+
+		// --- Advanced Mood Tracking ---
+		containerEl.createEl("h3", { text: "🎭 Advanced Mood Tracking" });
+
+		new Setting(containerEl)
+			.setName("Energy level tracking")
+			.setDesc("Track energy levels (Low/Medium/High) alongside mood.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableEnergyTracking).onChange(async (value) => {
+					this.plugin.settings.enableEnergyTracking = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Stress level tracking")
+			.setDesc("Track stress on a 1-10 scale with a slider.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableStressTracking).onChange(async (value) => {
+					this.plugin.settings.enableStressTracking = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Emotion tags")
+			.setDesc("Select multiple emotions per entry (grateful, anxious, calm, etc).")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableEmotionTags).onChange(async (value) => {
+					this.plugin.settings.enableEmotionTags = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Mood triggers")
+			.setDesc("Track what influenced your mood (work, health, relationships, etc).")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableMoodTriggers).onChange(async (value) => {
+					this.plugin.settings.enableMoodTriggers = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		// --- Gamification ---
+		containerEl.createEl("h3", { text: "🎮 Gamification" });
+
+		new Setting(containerEl)
+			.setName("Achievement badges")
+			.setDesc("Unlock badges for writing milestones (streaks, word counts, entries).")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableAchievements).onChange(async (value) => {
+					this.plugin.settings.enableAchievements = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Writing heatmap")
+			.setDesc("Show a GitHub-style activity heatmap in the navigator.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableWritingHeatmap).onChange(async (value) => {
+					this.plugin.settings.enableWritingHeatmap = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Heatmap color theme")
+			.setDesc("Color scheme for the writing heatmap.")
+			.addDropdown((dropdown) => {
+				dropdown.addOption("green", "🟩 Green");
+				dropdown.addOption("blue", "🟦 Blue");
+				dropdown.addOption("purple", "🟪 Purple");
+				dropdown.addOption("orange", "🟧 Orange");
+				dropdown.setValue(this.plugin.settings.heatmapColorTheme);
+				dropdown.onChange(async (value) => {
+					this.plugin.settings.heatmapColorTheme = value as "green" | "blue" | "purple" | "orange";
+					await this.saveWithFeedback();
+				});
+			});
+
+		// --- Smart Templates ---
+		containerEl.createEl("h3", { text: "🤖 Smart Features" });
+
+		new Setting(containerEl)
+			.setName("Smart prompts")
+			.setDesc("Get contextual writing prompts based on your journal patterns.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableSmartPrompts).onChange(async (value) => {
+					this.plugin.settings.enableSmartPrompts = value;
+					await this.saveWithFeedback();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Auto-tagging")
+			.setDesc("Automatically detect topics in entries and suggest tags.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.enableAutoTagging).onChange(async (value) => {
+					this.plugin.settings.enableAutoTagging = value;
+					await this.saveWithFeedback();
+				}),
 			);
 
 		// --- Custom Templates ---

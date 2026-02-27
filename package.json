@@ -1,6 +1,6 @@
 {
     "name": "daily-journal",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Create, organize, and manage daily journal entries with customizable templates, mood tracking, and date-based folder structure.",
     "main": "main.js",
     "type": "module",

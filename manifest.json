@@ -1,9 +1,9 @@
 {
     "id": "daily-journal",
     "name": "Daily Journal",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "minAppVersion": "0.15.0",
-    "description": "Create, organize, and manage daily journal entries with customizable templates, mood tracking, and date-based folder structure.",
+    "description": "Create, organize, and manage daily journal entries with customizable templates, advanced mood tracking, writing heatmap, achievements, and smart insights.",
     "author": "LinhDangDev",
     "isDesktopOnly": false
 }

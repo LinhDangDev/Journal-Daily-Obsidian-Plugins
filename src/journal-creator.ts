@@ -1,6 +1,8 @@
 import { App, TFile, TFolder, normalizePath } from "obsidian";
 import type { JournalPluginSettings } from "./settings";
 import { DateFormatter } from "./utils/date-formatter";
+import { SmartPrompts } from "./smart-prompts";
+import { REFLECTION_PROMPTS } from "./constants/prompts";
 
 const DAYS_OF_WEEK_EN = [
 	"Sunday",
@@ -144,6 +146,88 @@ export class JournalCreator {
 		}
 	}
 
+	/**
+	 * Update extended mood data in frontmatter (energy, stress, emotions, triggers).
+	 */
+	async updateExtendedMood(
+		file: TFile,
+		data: {
+			energy?: string | null;
+			stress?: number | null;
+			emotions?: string[];
+			triggers?: string[];
+		},
+	): Promise<void> {
+		try {
+			let content = await this.app.vault.read(file);
+
+			// Helper: set or add a simple key-value frontmatter field
+			const setField = (key: string, value: string) => {
+				const regex = new RegExp(
+					`^(---[\\s\\S]*?)(${key}:\\s*(?:"[^"]*"|\\S+))([\\s\\S]*?---)`,
+					"m",
+				);
+				if (regex.test(content)) {
+					content = content.replace(regex, `$1${key}: ${value}$3`);
+				} else {
+					// Add after mood field, or after date field, or at top of frontmatter
+					if (content.includes("mood:")) {
+						content = content.replace(/(mood:\s*"[^"]*")/, `$1\n${key}: ${value}`);
+					} else if (content.includes("date:")) {
+						content = content.replace(/(date:\s*"[^"]*")/, `$1\n${key}: ${value}`);
+					} else if (content.startsWith("---")) {
+						content = content.replace(/^(---\n)/, `$1${key}: ${value}\n`);
+					}
+				}
+			};
+
+			// Helper: set or add an array frontmatter field
+			const setArrayField = (key: string, values: string[]) => {
+				const arrayStr =
+					values.length > 0 ? `[${values.join(", ")}]` : "[]";
+
+				// Remove existing array field (handles multi-line YAML arrays too)
+				const inlineRegex = new RegExp(
+					`^(---[\\s\\S]*?)(${key}:\\s*\\[[^\\]]*\\])([\\s\\S]*?---)`,
+					"m",
+				);
+				if (inlineRegex.test(content)) {
+					content = content.replace(inlineRegex, `$1${key}: ${arrayStr}$3`);
+				} else {
+					// Add the field
+					if (content.includes("mood:")) {
+						content = content.replace(
+							/(mood:\s*"[^"]*")/,
+							`$1\n${key}: ${arrayStr}`,
+						);
+					} else if (content.startsWith("---")) {
+						content = content.replace(/^(---\n)/, `$1${key}: ${arrayStr}\n`);
+					}
+				}
+			};
+
+			if (data.energy !== undefined && data.energy !== null) {
+				setField("energy", `"${data.energy}"`);
+			}
+			if (data.stress !== undefined && data.stress !== null) {
+				setField("stress", String(data.stress));
+			}
+			if (data.emotions !== undefined && data.emotions.length > 0) {
+				setArrayField("emotions", data.emotions);
+			}
+			if (data.triggers !== undefined && data.triggers.length > 0) {
+				setArrayField("triggers", data.triggers);
+			}
+
+			await this.app.vault.modify(file, content);
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("does not exist")) {
+				throw new Error("Journal entry was deleted before mood update");
+			}
+			throw error;
+		}
+	}
+
 	exists(date: Date): boolean {
 		const filePath = this.getJournalPath(date);
 		const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -183,6 +267,12 @@ export class JournalCreator {
 			"{{monthName}}": monthName,
 			"{{day}}": day,
 			"{{quote}}": quote,
+			// Phase 5: Expanded template variables
+			"{{moon_phase}}": SmartPrompts.getMoonPhase(date),
+			"{{weather_emoji}}": SmartPrompts.getSeasonEmoji(date),
+			"{{season}}": SmartPrompts.getSeason(date),
+			"{{week_number}}": String(SmartPrompts.getWeekNumber(date)),
+			"{{random_prompt}}": REFLECTION_PROMPTS[Math.floor(Math.random() * REFLECTION_PROMPTS.length)] ?? "What's on your mind?",
 		};
 
 		for (const [variable, value] of Object.entries(replacements)) {

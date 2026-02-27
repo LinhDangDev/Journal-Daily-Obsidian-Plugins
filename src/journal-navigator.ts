@@ -1,6 +1,12 @@
 import { App, Modal, TFile, Notice } from "obsidian";
 import type JournalPlugin from "./main";
 import type { StreakStats } from "./streak-tracker";
+import { WritingHeatmap } from "./writing-heatmap";
+import {
+	generateInsights,
+	parseExtendedMoodFromFrontmatter,
+	type JournalEntryData,
+} from "./mood-analytics";
 import { ERROR_MESSAGES } from "./constants/messages";
 
 export class JournalNavigatorModal extends Modal {
@@ -24,10 +30,41 @@ export class JournalNavigatorModal extends Modal {
 		contentEl.createEl("h2", { text: "📚 Journal Navigator", cls: "journal-nav-title" });
 
 		// Stats cards
-		await this.renderStats(contentEl);
+		const stats = await this.plugin.streakTracker.getStats();
+		this.renderStatsFromData(contentEl, stats);
+
+		// Level bar & badge checking (if achievements enabled)
+		if (this.plugin.settings.enableAchievements) {
+			this.plugin.achievementTracker.renderLevelBar(contentEl);
+			const newBadges = this.plugin.achievementTracker.checkBadges(stats);
+			if (newBadges.length > 0) {
+				this.plugin.achievementTracker.announceNewBadges(newBadges);
+				await this.plugin.achievementTracker.saveData(
+					() => this.plugin.loadData(),
+					(d) => this.plugin.saveData(d),
+				);
+			}
+		}
+
+		// Writing heatmap (if enabled)
+		if (this.plugin.settings.enableWritingHeatmap) {
+			const heatmap = new WritingHeatmap(this.app, this.plugin.settings);
+			heatmap.render(contentEl, (date) => {
+				this.close();
+				this.plugin.openJournalForDate(date);
+			});
+		}
+
+		// Badge gallery (if achievements enabled)
+		if (this.plugin.settings.enableAchievements) {
+			this.plugin.achievementTracker.renderBadgeGallery(contentEl);
+		}
 
 		// Mood analytics
 		await this.renderMoodAnalytics(contentEl);
+
+		// Enhanced mood insights
+		await this.renderMoodInsights(contentEl);
 
 		// Search bar with accessibility
 		const searchContainer = contentEl.createDiv({ cls: "journal-nav-search-container" });
@@ -85,9 +122,7 @@ export class JournalNavigatorModal extends Modal {
 		}
 	}
 
-	private async renderStats(container: HTMLElement): Promise<void> {
-		const stats: StreakStats = await this.plugin.streakTracker.getStats();
-
+	private renderStatsFromData(container: HTMLElement, stats: StreakStats): void {
 		const statsGrid = container.createDiv({ cls: "journal-nav-stats" });
 
 		const statItems: Array<{ icon: string; value: string; label: string }> = [
@@ -328,6 +363,49 @@ export class JournalNavigatorModal extends Modal {
 				cls: "journal-mood-empty",
 				text: "No mood data yet. Track your mood when creating journal entries!",
 			});
+		}
+	}
+
+	/**
+	 * Render mood insights from extended mood data.
+	 */
+	private async renderMoodInsights(container: HTMLElement): Promise<void> {
+		// Build JournalEntryData from all entries
+		const entries: JournalEntryData[] = [];
+		const folder = this.plugin.settings.journalFolder;
+		const allFiles = this.app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+
+		for (const file of allFiles) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) continue;
+
+			const parsed = parseExtendedMoodFromFrontmatter(cache.frontmatter as Record<string, unknown>);
+			if (!parsed.mood) continue;
+
+			entries.push({
+				file,
+				date: new Date(file.stat.ctime),
+				mood: parsed.mood,
+				moodScore: parsed.moodScore,
+				energy: parsed.energy,
+				stress: parsed.stress,
+				emotions: parsed.emotions,
+				triggers: parsed.triggers,
+				wordCount: 0,
+			});
+		}
+
+		if (entries.length < 3) return;
+
+		const insights = generateInsights(entries);
+		if (insights.length === 0) return;
+
+		const section = container.createDiv({ cls: "journal-mood-insights" });
+		section.createEl("h3", { text: "💡 Insights" });
+
+		for (const insight of insights) {
+			const item = section.createDiv({ cls: "journal-insight-item" });
+			item.createSpan({ text: insight });
 		}
 	}
 }

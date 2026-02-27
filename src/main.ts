@@ -3,21 +3,26 @@ import { DEFAULT_SETTINGS, JournalPluginSettings, JournalSettingTab } from "./se
 import { JournalCreator } from "./journal-creator";
 import { JournalCalendarView, CALENDAR_VIEW_TYPE } from "./calendar-view";
 import { MoodPickerModal } from "./mood-modal";
+import { ExtendedMoodModal } from "./extended-mood-modal";
 import { TemplatePickerModal } from "./template-picker";
 import { StreakTracker } from "./streak-tracker";
 import { JournalNavigatorModal } from "./journal-navigator";
+import { AchievementTracker } from "./achievements";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "./constants/messages";
 
 export default class JournalPlugin extends Plugin {
 	settings: JournalPluginSettings;
 	journalCreator: JournalCreator;
 	streakTracker: StreakTracker;
+	achievementTracker: AchievementTracker;
 
 	async onload() {
 		await this.loadSettings();
 
 		this.journalCreator = new JournalCreator(this.app, this.settings);
 		this.streakTracker = new StreakTracker(this.app, this.settings);
+		this.achievementTracker = new AchievementTracker(this.app, this.settings);
+		await this.achievementTracker.loadData(() => this.loadData());
 
 		// --- Register Calendar View ---
 		this.registerView(CALENDAR_VIEW_TYPE, (leaf) => new JournalCalendarView(leaf, this));
@@ -161,13 +166,50 @@ export default class JournalPlugin extends Plugin {
 			await this.openFile(file);
 			new Notice(SUCCESS_MESSAGES.JOURNAL_CREATED);
 
-			// Step 3: Mood picker (if enabled)
+			// Step 3: Mood picker (extended or basic)
 			if (this.settings.enableMoodTracker) {
-				const modal = new MoodPickerModal(this.app);
-				const mood = await modal.pickMood();
-				if (mood) {
-					await this.journalCreator.updateMood(file, `${mood.emoji} ${mood.label}`);
-					new Notice(SUCCESS_MESSAGES.MOOD_SET(`${mood.emoji} ${mood.label}`));
+				const hasExtended =
+					this.settings.enableEnergyTracking ||
+					this.settings.enableStressTracking ||
+					this.settings.enableEmotionTags ||
+					this.settings.enableMoodTriggers;
+
+				if (hasExtended) {
+					const modal = new ExtendedMoodModal(this.app, this.settings);
+					const result = await modal.pickMood();
+					if (result) {
+						if (result.mood) {
+							await this.journalCreator.updateMood(
+								file,
+								`${result.mood.emoji} ${result.mood.label}`,
+							);
+						}
+						await this.journalCreator.updateExtendedMood(file, {
+							energy: result.energy,
+							stress: result.stress,
+							emotions: result.emotions,
+							triggers: result.triggers,
+						});
+						if (result.mood) {
+							new Notice(
+								SUCCESS_MESSAGES.MOOD_SET(
+									`${result.mood.emoji} ${result.mood.label}`,
+								),
+							);
+						}
+					}
+				} else {
+					const modal = new MoodPickerModal(this.app);
+					const mood = await modal.pickMood();
+					if (mood) {
+						await this.journalCreator.updateMood(
+							file,
+							`${mood.emoji} ${mood.label}`,
+						);
+						new Notice(
+							SUCCESS_MESSAGES.MOOD_SET(`${mood.emoji} ${mood.label}`),
+						);
+					}
 				}
 			}
 
@@ -191,17 +233,55 @@ export default class JournalPlugin extends Plugin {
 			return;
 		}
 
-		const modal = new MoodPickerModal(this.app);
-		const mood = await modal.pickMood();
-		if (mood) {
-			try {
-				await this.journalCreator.updateMood(file, `${mood.emoji} ${mood.label}`);
-				new Notice(SUCCESS_MESSAGES.MOOD_UPDATED(`${mood.emoji} ${mood.label}`));
-				this.refreshCalendarView();
-			} catch (error) {
-				console.error("Journal Plugin: Failed to update mood", error);
-				new Notice(ERROR_MESSAGES.MOOD_UPDATE_FAILED);
+		const hasExtended =
+			this.settings.enableEnergyTracking ||
+			this.settings.enableStressTracking ||
+			this.settings.enableEmotionTags ||
+			this.settings.enableMoodTriggers;
+
+		try {
+			if (hasExtended) {
+				const modal = new ExtendedMoodModal(this.app, this.settings);
+				const result = await modal.pickMood();
+				if (result) {
+					if (result.mood) {
+						await this.journalCreator.updateMood(
+							file,
+							`${result.mood.emoji} ${result.mood.label}`,
+						);
+					}
+					await this.journalCreator.updateExtendedMood(file, {
+						energy: result.energy,
+						stress: result.stress,
+						emotions: result.emotions,
+						triggers: result.triggers,
+					});
+					if (result.mood) {
+						new Notice(
+							SUCCESS_MESSAGES.MOOD_UPDATED(
+								`${result.mood.emoji} ${result.mood.label}`,
+							),
+						);
+					}
+					this.refreshCalendarView();
+				}
+			} else {
+				const modal = new MoodPickerModal(this.app);
+				const mood = await modal.pickMood();
+				if (mood) {
+					await this.journalCreator.updateMood(
+						file,
+						`${mood.emoji} ${mood.label}`,
+					);
+					new Notice(
+						SUCCESS_MESSAGES.MOOD_UPDATED(`${mood.emoji} ${mood.label}`),
+					);
+					this.refreshCalendarView();
+				}
 			}
+		} catch (error) {
+			console.error("Journal Plugin: Failed to update mood", error);
+			new Notice(ERROR_MESSAGES.MOOD_UPDATE_FAILED);
 		}
 	}
 

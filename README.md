@@ -13,7 +13,7 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 ### 📝 Smart Journal Creation
 - **One-click journal creation** — Create today's journal entry instantly via ribbon icon, command palette, or status bar click.
 - **Date-based folder structure** — Entries are automatically organized as `Journal/YYYY/MM/date.md`.
-- **Template variables** — Dynamic content with `{{date}}`, `{{time}}`, `{{dayOfWeek}}`, `{{year}}`, `{{month}}`, `{{monthName}}`, `{{day}}`, and `{{quote}}`.
+- **Template variables** — Dynamic content with `{{date}}`, `{{time}}`, `{{dayOfWeek}}`, `{{year}}`, `{{month}}`, `{{monthName}}`, `{{day}}`, `{{quote}}`, `{{moon_phase}}`, `{{season}}`, `{{weather_emoji}}`, `{{week_number}}`, and `{{random_prompt}}`.
 - **Create for any date** — Commands for today, yesterday, and tomorrow.
 
 ### 📄 Template System
@@ -32,6 +32,14 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 - 5 mood levels: 😄 Great, 🙂 Good, 😐 Okay, 😔 Sad, 😡 Awful.
 - Mood is stored in frontmatter and displayed on the calendar.
 - Update mood anytime via the command palette.
+
+### 🎭 Advanced Mood Tracking *(NEW in v2.0)*
+- **Energy level** — Track Low/Medium/High energy alongside mood.
+- **Stress slider** — Rate stress on a 1-10 scale.
+- **Emotion tags** — Select multiple emotions per entry (grateful, anxious, calm, excited, etc.).
+- **Mood triggers** — Log what influenced your mood (work, health, relationships, weather, etc.).
+- **Multi-panel flow** — Progress through mood → energy → stress → emotions → triggers with skip options.
+- Each dimension stored in frontmatter for analytics.
 
 ### 📅 Calendar View
 - Beautiful interactive calendar in the right sidebar.
@@ -52,12 +60,42 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 - **Goal reached indicator** — Changes to `✅ 500/500` when you hit your target.
 - Disable by setting goal to `0`.
 
+### 📊 Writing Heatmap *(NEW in v2.0)*
+- **GitHub-style activity grid** — 365-day writing history at a glance.
+- **Color themes** — Green, blue, purple, or orange.
+- **Click any day** — Jump to that journal entry.
+- **Year stats** — Total entries count in the footer.
+
+### 🏅 Achievement System *(NEW in v2.0)*
+- **12 unlockable badges** — First Words, 3-Day Streak, Week Warrior, 30-Day Champion, 100-Day Legend, Wordsmith (1K words), Novelist (10K), Prolific Author (50K), Marathon Writer (100K), and more.
+- **XP & Level system** — 6 levels from Beginner to Master Writer.
+- **Badge gallery** — Visual badge collection in the Navigator.
+- **Level progress bar** — See your XP progress.
+- **Notifications** — Toast notifications when badges are unlocked.
+
+### 💡 Smart Insights *(NEW in v2.0)*
+- **Day-of-week patterns** — "You tend to feel best on Fridays."
+- **Trigger correlations** — "Exercise days tend to boost your mood."
+- **Weekly mood trends** — "You've been having a great week! 🌟"
+- **Emotion frequency** — Most common emotion tracking.
+- **Stress analysis** — Average stress level insights.
+
+### 🤖 Smart Prompts *(NEW in v2.0)*
+- **50 reflection prompts** — `{{random_prompt}}` in templates.
+- **Moon phase** — `{{moon_phase}}` shows current lunar phase emoji.
+- **Season tracking** — `{{season}}` and `{{weather_emoji}}`.
+- **Week number** — `{{week_number}}` for ISO week.
+
 ### 📚 Journal Navigator
 - Browse all journal entries in a searchable modal.
 - **Live search** — Filter entries by content, filename, or mood (debounced).
 - **Stats dashboard** — Total entries, word count, current streak, and best streak.
 - **Entry previews** — See date, mood, word count, and a text preview for each entry.
 - **Mood analytics** — 30-day mood grid and mood distribution chart.
+- **Writing heatmap** — GitHub-style activity overview *(NEW in v2.0)*.
+- **Badge gallery** — Achievement badges collection *(NEW in v2.0)*.
+- **Level progress** — XP bar and current level *(NEW in v2.0)*.
+- **Mood insights** — AI-generated text insights from your journal patterns *(NEW in v2.0)*.
 
 ### 💡 Daily Quotes
 - A rotating collection of 50+ inspirational quotes.
@@ -68,6 +106,9 @@ A beautiful daily journal plugin for [Obsidian](https://obsidian.md). Create, or
 - Customizable journal folder path.
 - Multiple date formats: `YYYY-MM-DD`, `DD-MM-YYYY`, `MM-DD-YYYY`, `YYYY/MM/DD`, `DD.MM.YYYY`.
 - Toggle features on/off: mood tracker, daily quotes, streak counter, template picker.
+- **Advanced Mood Tracking** — Toggle energy, stress, emotions, triggers independently *(NEW in v2.0)*.
+- **Gamification** — Toggle achievements, heatmap, color themes *(NEW in v2.0)*.
+- **Smart Features** — Toggle smart prompts, auto-tagging *(NEW in v2.0)*.
 - **Daily word goal** — Set a writing target with status bar progress tracking.
 - Open journal on Obsidian startup (optional).
 - Show/hide ribbon icon.
@@ -137,14 +178,19 @@ Use these variables in your templates — they are automatically replaced when a
 
 | Variable | Example Output |
 |----------|---------------|
-| `{{date}}` | `2026-02-26` |
+| `{{date}}` | `2026-02-27` |
 | `{{time}}` | `14:30` |
 | `{{dayOfWeek}}` | `Thursday` |
 | `{{year}}` | `2026` |
 | `{{month}}` | `02` |
 | `{{monthName}}` | `February` |
-| `{{day}}` | `26` |
+| `{{day}}` | `27` |
 | `{{quote}}` | *An inspirational quote* |
+| `{{moon_phase}}` | 🌓 *(current lunar phase)* |
+| `{{season}}` | `Spring` |
+| `{{weather_emoji}}` | 🌸 *(seasonal emoji)* |
+| `{{week_number}}` | `9` *(ISO week)* |
+| `{{random_prompt}}` | *A reflection prompt* |
 
 ### Folder Structure
 
@@ -209,18 +255,26 @@ npm run test:watch  # Watch mode
 
 ```
 src/
-├── main.ts              # Plugin entry point, commands, and lifecycle
-├── settings.ts          # Settings UI, template presets, and data types
-├── journal-creator.ts   # Journal file creation and template rendering
-├── calendar-view.ts     # Calendar sidebar view with mood dots
-├── journal-navigator.ts # Searchable journal browser with stats + mood analytics
-├── mood-modal.ts        # Mood picker modal
-├── template-picker.ts   # Template picker modal
-├── streak-tracker.ts    # Writing streak calculator
+├── main.ts                  # Plugin entry point, commands, and lifecycle
+├── settings.ts              # Settings UI, template presets, and data types
+├── journal-creator.ts       # Journal file creation and template rendering
+├── calendar-view.ts         # Calendar sidebar view with mood dots
+├── journal-navigator.ts     # Searchable journal browser with stats + analytics
+├── mood-modal.ts            # Simple mood picker modal
+├── extended-mood-modal.ts   # Multi-panel mood picker (energy/stress/emotions/triggers)
+├── template-picker.ts       # Template picker modal
+├── streak-tracker.ts        # Writing streak calculator
+├── mood-analytics.ts        # Mood analytics engine (insights, correlations)
+├── writing-heatmap.ts       # GitHub-style writing activity heatmap
+├── achievements.ts          # Badge & XP achievement system
+├── smart-prompts.ts         # Smart prompt generators (moon, season, prompts)
 ├── constants/
-│   └── messages.ts      # Centralized UI messages
+│   ├── messages.ts          # Centralized UI messages
+│   ├── emotions.ts          # Emotion tags, triggers, energy options
+│   ├── prompts.ts           # Reflection & gratitude prompt pools
+│   └── topics.ts            # Topic keywords for auto-tagging
 ├── utils/
-│   └── date-formatter.ts # Date formatting utilities
+│   └── date-formatter.ts    # Date formatting utilities
 ├── __tests__/
 │   └── streak-tracker.test.ts  # StreakTracker unit tests
 └── utils/__tests__/
