@@ -1,8 +1,14 @@
 {
-	"semi": true,
-	"singleQuote": false,
-	"tabWidth": 4,
-	"useTabs": true,
-	"printWidth": 100,
-	"trailingComma": "all"
+    "semi": true,
+    "singleQuote": false,
+    "tabWidth": 4,
+    "useTabs": true,
+    "printWidth": 100,
+    "extends": [
+        "plugin:obsidianmd/recommended"
+    ],
+    "rules": {
+        "obsidianmd/sample-names": "off",
+        "obsidianmd/prefer-file-manager-trash": "error"
+    }
 }
