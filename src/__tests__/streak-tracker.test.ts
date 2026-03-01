@@ -5,7 +5,7 @@ import { StreakTracker } from "../streak-tracker";
 // Create a minimal StreakTracker for testing pure calculation methods
 // We only test calculateCurrentStreak and calculateLongestStreak with explicit sortedDates
 function createTracker(): StreakTracker {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
 	return new StreakTracker(null as any, null as any);
 }
 

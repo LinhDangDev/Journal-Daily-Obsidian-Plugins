@@ -3,6 +3,8 @@ import type JournalPlugin from "./main";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "./constants/messages";
 import { EMOTION_TAGS, TRIGGER_CATEGORIES } from "./constants/emotions";
 
+export type WritingMode = "structured" | "free" | "stream" | "narrative";
+
 export interface CustomTemplate {
 	id: string;
 	name: string;
@@ -29,6 +31,10 @@ export interface JournalPluginSettings {
 	enableStreakCounter: boolean;
 	enableTemplatePicker: boolean;
 	customTemplates: CustomTemplate[];
+
+	// --- Writing Modes ---
+	enableWritingModes: boolean;
+	defaultWritingMode: WritingMode;
 	dailyWordGoal: number;
 
 	// --- Phase 1: Advanced Mood ---
@@ -106,6 +112,10 @@ tags: [journal]
 	enableStreakCounter: true,
 	enableTemplatePicker: false,
 	customTemplates: [],
+
+	// Writing Modes
+	enableWritingModes: true,
+	defaultWritingMode: "structured",
 	dailyWordGoal: 0,
 
 	// Phase 1
@@ -274,7 +284,92 @@ tags: [journal, weekly-review]
 
 `,
 	},
+	free: {
+		name: "Free Writing",
+		icon: "✍️",
+		content: `---
+date: "{{date}}"
+day: "{{dayOfWeek}}"
+mood: ""
+writing_mode: "free"
+tags: [journal]
+---
+
+# ✍️ {{date}}
+
+> *"{{quote}}"*
+
+
+`,
+	},
+	stream: {
+		name: "Stream of Consciousness",
+		icon: "🧘",
+		content: `---
+date: "{{date}}"
+mood: ""
+writing_mode: "stream"
+tags: [journal, stream]
+---
+
+# 🧘 Stream — {{date}} | {{time}}
+
+> *{{random_prompt}}*
+
+
+`,
+	},
+	narrative: {
+		name: "Story / Narrative",
+		icon: "📖",
+		content: `---
+date: "{{date}}"
+day: "{{dayOfWeek}}"
+mood: ""
+writing_mode: "narrative"
+tags: [journal, narrative]
+---
+
+# 📖 {{dayOfWeek}}, {{monthName}} {{day}}, {{year}}
+
+> *"{{quote}}"*
+
+
+`,
+	},
 };
+
+/**
+ * Get writing mode for a template preset. Returns the mode if the preset key matches, or "structured" for legacy presets.
+ */
+export function getWritingModeForPreset(presetKey: string): WritingMode {
+	if (presetKey === "free" || presetKey === "stream" || presetKey === "narrative") {
+		return presetKey;
+	}
+	return "structured";
+}
+
+/**
+ * Get template presets filtered by writing mode.
+ */
+export function getPresetsForMode(mode: WritingMode): Record<string, { name: string; icon: string; content: string }> {
+	const modePresetKeys: Record<WritingMode, string[]> = {
+		structured: ["default", "minimal", "gratitude", "bullet", "weekly"],
+		free: ["free"],
+		stream: ["stream"],
+		narrative: ["narrative"],
+	};
+
+	const keys = modePresetKeys[mode] ?? [];
+	const result: Record<string, { name: string; icon: string; content: string }> = {};
+	for (const key of keys) {
+		const preset = TEMPLATE_PRESETS[key];
+		if (preset) {
+			result[key] = preset;
+		}
+	}
+	return result;
+}
 
 export function getAllTemplates(settings: JournalPluginSettings): TemplateEntry[] {
 	const builtIn: TemplateEntry[] = Object.entries(TEMPLATE_PRESETS).map(([id, preset]) => ({
@@ -314,10 +409,10 @@ export class JournalSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Header
-		containerEl.createEl("h2", { text: "📓 Journal Settings" });
+		new Setting(containerEl).setName("📓 journal").setHeading();
 
 		// --- Folder Settings ---
-		containerEl.createEl("h3", { text: "📁 Organization" });
+		new Setting(containerEl).setName("📁 organization").setHeading();
 
 		new Setting(containerEl)
 			.setName("Journal folder")
@@ -355,7 +450,7 @@ export class JournalSettingTab extends PluginSettingTab {
 			});
 
 		// --- Features ---
-		containerEl.createEl("h3", { text: "✨ Features" });
+		new Setting(containerEl).setName("✨ features").setHeading();
 
 		new Setting(containerEl)
 			.setName("Mood tracker")
@@ -402,6 +497,33 @@ export class JournalSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Writing modes")
+			.setDesc("Show a writing style selector (free writing, stream of consciousness, narrative) before the template picker.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.enableWritingModes)
+					.onChange(async (value) => {
+						this.plugin.settings.enableWritingModes = value;
+						await this.saveWithFeedback();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Default writing mode")
+			.setDesc("The writing mode to use when creating a new entry without the mode selector.")
+			.addDropdown((dropdown) => {
+				dropdown.addOption("structured", "📝 structured");
+				dropdown.addOption("free", "✍️ free writing");
+				dropdown.addOption("stream", "🧘 stream of consciousness");
+				dropdown.addOption("narrative", "📖 story / narrative");
+				dropdown.setValue(this.plugin.settings.defaultWritingMode);
+				dropdown.onChange(async (value) => {
+					this.plugin.settings.defaultWritingMode = value as WritingMode;
+					await this.saveWithFeedback();
+				});
+			});
+
+		new Setting(containerEl)
 			.setName("Daily word goal")
 			.setDesc("Set a daily writing target. Shows progress in the status bar (0 to disable).")
 			.addText((text) =>
@@ -416,11 +538,11 @@ export class JournalSettingTab extends PluginSettingTab {
 			);
 
 		// --- Advanced Mood Tracking ---
-		containerEl.createEl("h3", { text: "🎭 Advanced Mood Tracking" });
+		new Setting(containerEl).setName("🎭 advanced mood tracking").setHeading();
 
 		new Setting(containerEl)
 			.setName("Energy level tracking")
-			.setDesc("Track energy levels (Low/Medium/High) alongside mood.")
+			.setDesc("Track energy levels (low/medium/high) alongside mood.")
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.enableEnergyTracking).onChange(async (value) => {
 					this.plugin.settings.enableEnergyTracking = value;
@@ -459,7 +581,7 @@ export class JournalSettingTab extends PluginSettingTab {
 			);
 
 		// --- Gamification ---
-		containerEl.createEl("h3", { text: "🎮 Gamification" });
+		new Setting(containerEl).setName("🎮 gamification").setHeading();
 
 		new Setting(containerEl)
 			.setName("Achievement badges")
@@ -485,10 +607,10 @@ export class JournalSettingTab extends PluginSettingTab {
 			.setName("Heatmap color theme")
 			.setDesc("Color scheme for the writing heatmap.")
 			.addDropdown((dropdown) => {
-				dropdown.addOption("green", "🟩 Green");
-				dropdown.addOption("blue", "🟦 Blue");
-				dropdown.addOption("purple", "🟪 Purple");
-				dropdown.addOption("orange", "🟧 Orange");
+				dropdown.addOption("green", "🟩 green");
+				dropdown.addOption("blue", "🟦 blue");
+				dropdown.addOption("purple", "🟪 purple");
+				dropdown.addOption("orange", "🟧 orange");
 				dropdown.setValue(this.plugin.settings.heatmapColorTheme);
 				dropdown.onChange(async (value) => {
 					this.plugin.settings.heatmapColorTheme = value as "green" | "blue" | "purple" | "orange";
@@ -497,7 +619,7 @@ export class JournalSettingTab extends PluginSettingTab {
 			});
 
 		// --- Smart Templates ---
-		containerEl.createEl("h3", { text: "🤖 Smart Features" });
+		new Setting(containerEl).setName("🤖 smart features").setHeading();
 
 		new Setting(containerEl)
 			.setName("Smart prompts")
@@ -520,7 +642,7 @@ export class JournalSettingTab extends PluginSettingTab {
 			);
 
 		// --- Custom Templates ---
-		containerEl.createEl("h3", { text: "📄 Custom Templates" });
+		new Setting(containerEl).setName("📄 custom templates").setHeading();
 
 		// List existing custom templates
 		for (let i = 0; i < this.plugin.settings.customTemplates.length; i++) {
@@ -532,11 +654,13 @@ export class JournalSettingTab extends PluginSettingTab {
 				.setDesc("Custom template")
 				.addButton((button) =>
 					button.setButtonText("Edit").onClick(() => {
-						new CustomTemplateEditorModal(this.app, template, async (updated) => {
-							this.plugin.settings.customTemplates[i] = updated;
-							await this.plugin.saveSettings();
-							this.display();
-							new Notice("✅ Template updated");
+						new CustomTemplateEditorModal(this.app, template, (updated) => {
+							void (async () => {
+								this.plugin.settings.customTemplates[i] = updated;
+								await this.plugin.saveSettings();
+								this.display();
+								new Notice("✅ template updated");
+							})();
 						}).open();
 					}),
 				)
@@ -553,7 +677,7 @@ export class JournalSettingTab extends PluginSettingTab {
 								this.plugin.settings.customTemplates.splice(i, 1);
 								await this.plugin.saveSettings();
 								this.display();
-								new Notice("✅ Template deleted");
+								new Notice("✅ template deleted");
 							}
 						}),
 				);
@@ -565,26 +689,28 @@ export class JournalSettingTab extends PluginSettingTab {
 			.setDesc("Create a new template for the template picker.")
 			.addButton((button) =>
 				button
-					.setButtonText("+ Add")
+					.setButtonText("+ add")
 					.setCta()
 					.onClick(() => {
 						const newTemplate: CustomTemplate = {
 							id: Date.now().toString(36),
-							name: "New Template",
+							name: "New template",
 							icon: "📄",
 							content: DEFAULT_SETTINGS.templateContent,
 						};
-						new CustomTemplateEditorModal(this.app, newTemplate, async (saved) => {
-							this.plugin.settings.customTemplates.push(saved);
-							await this.plugin.saveSettings();
-							this.display();
-							new Notice("✅ Template added");
+						new CustomTemplateEditorModal(this.app, newTemplate, (saved) => {
+							void (async () => {
+								this.plugin.settings.customTemplates.push(saved);
+								await this.plugin.saveSettings();
+								this.display();
+								new Notice("✅ template added");
+							})();
 						}).open();
 					}),
 			);
 
 		// --- Behavior Settings ---
-		containerEl.createEl("h3", { text: "⚙️ Behavior" });
+		new Setting(containerEl).setName("⚙️ behavior").setHeading();
 
 		new Setting(containerEl)
 			.setName("Open journal on startup")
@@ -598,7 +724,7 @@ export class JournalSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Show ribbon icon")
-			.setDesc("Show the journal icon in the left sidebar. (Restart required)")
+			.setDesc("Show the journal icon in the left sidebar. (restart required)")
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.showRibbonIcon).onChange(async (value) => {
 					this.plugin.settings.showRibbonIcon = value;
@@ -607,14 +733,14 @@ export class JournalSettingTab extends PluginSettingTab {
 			);
 
 		// --- Template Settings ---
-		containerEl.createEl("h3", { text: "📝 Template" });
+		new Setting(containerEl).setName("📝 template").setHeading();
 
 		// Template Presets
 		new Setting(containerEl)
 			.setName("Template presets")
 			.setDesc("Load a pre-built template. This will replace your current template.")
 			.addDropdown((dropdown) => {
-				dropdown.addOption("", "— Select a preset —");
+				dropdown.addOption("", "— select a preset —");
 				for (const [key, preset] of Object.entries(TEMPLATE_PRESETS)) {
 					dropdown.addOption(key, preset.name);
 				}
@@ -637,9 +763,7 @@ export class JournalSettingTab extends PluginSettingTab {
 			.addTextArea((text) => {
 				text.inputEl.rows = 20;
 				text.inputEl.cols = 50;
-				text.inputEl.style.width = "100%";
-				text.inputEl.style.fontFamily = "monospace";
-				text.inputEl.style.fontSize = "12px";
+				text.inputEl.addClass("journal-template-textarea");
 				text.setPlaceholder("Enter your journal template...")
 					.setValue(this.plugin.settings.templateContent)
 					.onChange(async (value) => {
@@ -697,11 +821,7 @@ export class JournalSettingTab extends PluginSettingTab {
 			modal.titleEl.setText(title);
 			modal.contentEl.createEl("p", { text: message });
 
-			const buttonContainer = modal.contentEl.createDiv({ cls: "modal-button-container" });
-			buttonContainer.style.display = "flex";
-			buttonContainer.style.justifyContent = "flex-end";
-			buttonContainer.style.gap = "8px";
-			buttonContainer.style.marginTop = "16px";
+			const buttonContainer = modal.contentEl.createDiv({ cls: "journal-modal-button-container" });
 
 			const cancelBtn = buttonContainer.createEl("button", { text: "Cancel" });
 			cancelBtn.addEventListener("click", () => {
@@ -740,7 +860,7 @@ class CustomTemplateEditorModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl("h2", { text: "Edit Template" });
+		new Setting(contentEl).setName("Edit template").setHeading();
 
 		new Setting(contentEl).setName("Name").addText((text) =>
 			text
@@ -755,7 +875,7 @@ class CustomTemplateEditorModal extends Modal {
 			.setName("Icon")
 			.setDesc("Single emoji for the template card.")
 			.addText((text) => {
-				text.inputEl.style.width = "60px";
+				text.inputEl.addClass("journal-icon-input");
 				text.setPlaceholder("📄")
 					.setValue(this.template.icon)
 					.onChange((value) => {
@@ -770,9 +890,7 @@ class CustomTemplateEditorModal extends Modal {
 			)
 			.addTextArea((text) => {
 				text.inputEl.rows = 15;
-				text.inputEl.style.width = "100%";
-				text.inputEl.style.fontFamily = "monospace";
-				text.inputEl.style.fontSize = "12px";
+				text.inputEl.addClass("journal-template-textarea");
 				text.setPlaceholder("Enter template content...")
 					.setValue(this.template.content)
 					.onChange((value) => {
@@ -780,11 +898,7 @@ class CustomTemplateEditorModal extends Modal {
 					});
 			});
 
-		const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
-		buttonContainer.style.display = "flex";
-		buttonContainer.style.justifyContent = "flex-end";
-		buttonContainer.style.gap = "8px";
-		buttonContainer.style.marginTop = "16px";
+		const buttonContainer = contentEl.createDiv({ cls: "journal-modal-button-container" });
 
 		const cancelBtn = buttonContainer.createEl("button", { text: "Cancel" });
 		cancelBtn.addEventListener("click", () => {

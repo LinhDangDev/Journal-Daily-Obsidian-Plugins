@@ -163,7 +163,7 @@ export class AchievementTracker {
 			if (stored && typeof stored === "object") {
 				const s = stored as Record<string, unknown>;
 				this.data = {
-					unlockedBadges: Array.isArray(s["unlockedBadges"]) ? s["unlockedBadges"] : [],
+					unlockedBadges: Array.isArray(s["unlockedBadges"]) ? (s["unlockedBadges"] as UnlockedBadge[]) : [],
 					xp: typeof s["xp"] === "number" ? s["xp"] : 0,
 					level: typeof s["level"] === "number" ? s["level"] : 1,
 				};
@@ -265,7 +265,7 @@ export class AchievementTracker {
 	 */
 	renderBadgeGallery(container: HTMLElement): void {
 		const section = container.createDiv({ cls: "journal-achievements" });
-		section.createEl("h3", { text: "🏅 Achievements" });
+		section.createDiv({ text: "🏅 Achievements", cls: "journal-section-heading journal-section-subheading" });
 
 		const grid = section.createDiv({ cls: "journal-achievements-grid" });
 		const unlockedIds = new Set(this.data.unlockedBadges.map((b) => b.id));
@@ -301,6 +301,6 @@ export class AchievementTracker {
 
 		const bar = section.createDiv({ cls: "journal-xp-bar" });
 		const fill = bar.createDiv({ cls: "journal-xp-fill" });
-		fill.style.width = `${progress.percentage}%`;
+		fill.style.setProperty("--fill-pct", `${progress.percentage}%`);
 	}
 }

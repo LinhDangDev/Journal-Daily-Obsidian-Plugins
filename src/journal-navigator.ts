@@ -27,7 +27,7 @@ export class JournalNavigatorModal extends Modal {
 		contentEl.addClass("journal-navigator-modal");
 
 		// Title
-		contentEl.createEl("h2", { text: "📚 Journal Navigator", cls: "journal-nav-title" });
+		contentEl.createDiv({ text: "📚 Journal navigator", cls: "journal-nav-title journal-section-heading" });
 
 		// Stats cards
 		const stats = await this.plugin.streakTracker.getStats();
@@ -51,7 +51,7 @@ export class JournalNavigatorModal extends Modal {
 			const heatmap = new WritingHeatmap(this.app, this.plugin.settings);
 			heatmap.render(contentEl, (date) => {
 				this.close();
-				this.plugin.openJournalForDate(date);
+				void this.plugin.openJournalForDate(date);
 			});
 		}
 
@@ -61,30 +61,25 @@ export class JournalNavigatorModal extends Modal {
 		}
 
 		// Mood analytics
-		await this.renderMoodAnalytics(contentEl);
+		this.renderMoodAnalytics(contentEl);
 
 		// Enhanced mood insights
-		await this.renderMoodInsights(contentEl);
+		this.renderMoodInsights(contentEl);
 
 		// Search bar with accessibility
 		const searchContainer = contentEl.createDiv({ cls: "journal-nav-search-container" });
 
 		const searchLabel = searchContainer.createEl("label", {
-			cls: "journal-nav-search-label",
+			cls: "journal-nav-search-label sr-only",
 			attr: { for: "journal-search-input" },
 		});
 		searchLabel.setText("Search journals");
-		searchLabel.style.position = "absolute";
-		searchLabel.style.width = "1px";
-		searchLabel.style.height = "1px";
-		searchLabel.style.overflow = "hidden";
-		searchLabel.style.clip = "rect(0,0,0,0)";
 
 		const searchInput = searchContainer.createEl("input", {
 			cls: "journal-nav-search",
 			attr: {
 				type: "text",
-				placeholder: "🔍 Search your journals...",
+				placeholder: "🔍 search your journals...",
 				id: "journal-search-input",
 				"aria-label": "Search journal entries",
 			},
@@ -275,19 +270,21 @@ export class JournalNavigatorModal extends Modal {
 			});
 
 			// Click handler with error handling
-			item.addEventListener("click", async () => {
-				try {
-					const leaf = this.plugin.app.workspace.getLeaf(false);
-					if (leaf) {
-						await leaf.openFile(entry.file);
-					} else {
-						throw new Error("No active leaf available");
+			item.addEventListener("click", () => {
+				void (async () => {
+					try {
+						const leaf = this.plugin.app.workspace.getLeaf(false);
+						if (leaf) {
+							await leaf.openFile(entry.file);
+						} else {
+							throw new Error("No active leaf available");
+						}
+						this.close();
+					} catch (error) {
+						console.error("Journal Navigator: Failed to open entry", error);
+						new Notice(ERROR_MESSAGES.JOURNAL_OPEN_FAILED);
 					}
-					this.close();
-				} catch (error) {
-					console.error("Journal Navigator: Failed to open entry", error);
-					new Notice(ERROR_MESSAGES.JOURNAL_OPEN_FAILED);
-				}
+				})();
 			});
 		}
 	}
@@ -299,9 +296,9 @@ export class JournalNavigatorModal extends Modal {
 		return String(count);
 	}
 
-	private async renderMoodAnalytics(container: HTMLElement): Promise<void> {
+	private renderMoodAnalytics(container: HTMLElement): void {
 		const section = container.createDiv({ cls: "journal-mood-analytics" });
-		section.createEl("h3", { text: "😊 Mood Analytics (Last 30 Days)" });
+		section.createDiv({ text: "😊 Mood analytics (last 30 days)", cls: "journal-section-heading journal-section-subheading" });
 
 		// Collect mood data for last 30 days
 		const moodMap = new Map<string, string>(); // dateStr -> mood emoji
@@ -353,8 +350,8 @@ export class JournalNavigatorModal extends Modal {
 
 				const fill = bar.createDiv({ cls: "journal-mood-dist-fill" });
 				const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-				fill.style.width = `${pct}%`;
-				fill.style.backgroundColor = moodColors[mood] ?? "var(--text-muted)";
+				fill.style.setProperty("--fill-pct", `${pct}%`);
+				fill.style.setProperty("--fill-color", moodColors[mood] ?? "var(--text-muted)");
 
 				bar.createSpan({ text: String(count), cls: "journal-mood-dist-count" });
 			}
@@ -369,7 +366,7 @@ export class JournalNavigatorModal extends Modal {
 	/**
 	 * Render mood insights from extended mood data.
 	 */
-	private async renderMoodInsights(container: HTMLElement): Promise<void> {
+	private renderMoodInsights(container: HTMLElement): void {
 		// Build JournalEntryData from all entries
 		const entries: JournalEntryData[] = [];
 		const folder = this.plugin.settings.journalFolder;
@@ -401,7 +398,7 @@ export class JournalNavigatorModal extends Modal {
 		if (insights.length === 0) return;
 
 		const section = container.createDiv({ cls: "journal-mood-insights" });
-		section.createEl("h3", { text: "💡 Insights" });
+		section.createDiv({ text: "💡 Insights", cls: "journal-section-heading journal-section-subheading" });
 
 		for (const insight of insights) {
 			const item = section.createDiv({ cls: "journal-insight-item" });

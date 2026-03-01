@@ -36,11 +36,11 @@ export default class JournalPlugin extends Plugin {
 
 		// --- Status Bar ---
 		const statusBarItemEl = this.addStatusBarItem();
-		this.updateStatusBar(statusBarItemEl);
+		void this.updateStatusBar(statusBarItemEl);
 
 		// Update status bar every minute (properly registered for cleanup)
 		this.registerInterval(
-			window.setInterval(() => this.updateStatusBar(statusBarItemEl), 60 * 1000),
+			window.setInterval(() => { void this.updateStatusBar(statusBarItemEl); }, 60 * 1000),
 		);
 
 		// --- Commands ---
@@ -116,7 +116,7 @@ export default class JournalPlugin extends Plugin {
 	}
 
 	onunload() {
-		this.app.workspace.detachLeavesOfType(CALENDAR_VIEW_TYPE);
+		// No-op: leaves are not detached to preserve user layout
 	}
 
 	async openTodaysJournal(): Promise<void> {
@@ -289,7 +289,7 @@ export default class JournalPlugin extends Plugin {
 		const existing = this.app.workspace.getLeavesOfType(CALENDAR_VIEW_TYPE);
 
 		if (existing.length > 0 && existing[0]) {
-			this.app.workspace.revealLeaf(existing[0]);
+			void this.app.workspace.revealLeaf(existing[0]);
 			return;
 		}
 
@@ -299,7 +299,7 @@ export default class JournalPlugin extends Plugin {
 				type: CALENDAR_VIEW_TYPE,
 				active: true,
 			});
-			this.app.workspace.revealLeaf(leaf);
+			void this.app.workspace.revealLeaf(leaf);
 		}
 	}
 
@@ -349,14 +349,12 @@ export default class JournalPlugin extends Plugin {
 			? "Today's journal entry exists. Click to open."
 			: "No journal entry for today. Click to create.";
 
-		el.style.cursor = "pointer";
-		el.onclick = async () => {
-			try {
-				await this.openTodaysJournal();
-			} catch (error) {
+		el.addClass("journal-status-bar-clickable");
+		el.onclick = () => {
+			void this.openTodaysJournal().catch((error: unknown) => {
 				console.error("Journal Plugin: Failed to open today's journal", error);
 				new Notice(ERROR_MESSAGES.JOURNAL_OPEN_FAILED);
-			}
+			});
 		};
 	}
 

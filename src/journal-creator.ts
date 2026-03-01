@@ -140,7 +140,7 @@ export class JournalCreator {
 			await this.app.vault.modify(file, updated);
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("does not exist")) {
-				throw new Error("Journal entry was deleted before mood update");
+				throw new Error("Journal entry was deleted before mood update", { cause: error });
 			}
 			throw error;
 		}
@@ -222,7 +222,7 @@ export class JournalCreator {
 			await this.app.vault.modify(file, content);
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("does not exist")) {
-				throw new Error("Journal entry was deleted before mood update");
+				throw new Error("Journal entry was deleted before mood update", { cause: error });
 			}
 			throw error;
 		}

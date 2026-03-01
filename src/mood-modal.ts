@@ -43,10 +43,10 @@ export class MoodPickerModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass("journal-mood-modal");
 
-		// Title with proper heading
-		const title = contentEl.createEl("h2", {
+		// Title
+		const title = contentEl.createDiv({
 			text: "How are you feeling today?",
-			cls: "journal-mood-title",
+			cls: "journal-mood-title journal-section-heading",
 		});
 		title.setAttribute("id", "mood-picker-title");
 

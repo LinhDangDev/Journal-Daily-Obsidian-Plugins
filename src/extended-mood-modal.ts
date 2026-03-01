@@ -116,7 +116,7 @@ export class ExtendedMoodModal extends Modal {
 			if (i < this.currentPanel) dot.addClass("is-complete");
 		}
 
-		contentEl.createEl("h2", { text: title, cls: "journal-mood-title" });
+		contentEl.createDiv({ text: title, cls: "journal-mood-title journal-section-heading" });
 		contentEl.createEl("p", { text: subtitle, cls: "journal-mood-subtitle" });
 	}
 
@@ -159,7 +159,7 @@ export class ExtendedMoodModal extends Modal {
 
 	// ─── Panel 2: Energy ───
 	private renderEnergyPanel(): void {
-		this.renderHeader("Energy Level", "How's your energy today?");
+		this.renderHeader("Energy level", "How's your energy today?");
 
 		const { contentEl } = this;
 		const grid = contentEl.createDiv({ cls: "journal-energy-grid" });
@@ -195,7 +195,7 @@ export class ExtendedMoodModal extends Modal {
 
 	// ─── Panel 3: Stress ───
 	private renderStressPanel(): void {
-		this.renderHeader("Stress Level", "Rate your stress (1 = calm, 10 = very stressed)");
+		this.renderHeader("Stress level", "Rate your stress (1 = calm, 10 = very stressed)");
 
 		const { contentEl } = this;
 		const sliderContainer = contentEl.createDiv({ cls: "journal-stress-container" });
@@ -258,7 +258,7 @@ export class ExtendedMoodModal extends Modal {
 
 	// ─── Panel 4: Emotions ───
 	private renderEmotionsPanel(): void {
-		this.renderHeader("Emotion Tags", "Select all that apply (optional)");
+		this.renderHeader("Emotion tags", "Select all that apply (optional)");
 
 		const { contentEl } = this;
 		const grid = contentEl.createDiv({ cls: "journal-emotion-tags" });

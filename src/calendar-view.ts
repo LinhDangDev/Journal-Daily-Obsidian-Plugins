@@ -23,7 +23,7 @@ export class JournalCalendarView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Journal Calendar";
+		return "Journal calendar";
 	}
 
 	getIcon(): string {
@@ -31,6 +31,7 @@ export class JournalCalendarView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
+		await super.onOpen();
 		const container = this.containerEl.children[1];
 		if (!(container instanceof HTMLElement)) {
 			console.error("Journal Calendar: Container element not found");
@@ -45,6 +46,7 @@ export class JournalCalendarView extends ItemView {
 	}
 
 	async onClose(): Promise<void> {
+		await super.onClose();
 		this.journalDaysCache.clear();
 		this.moodMapCache.clear();
 	}
@@ -112,7 +114,7 @@ export class JournalCalendarView extends ItemView {
 		// --- Today button ---
 		const todayBtn = container.createEl("button", {
 			cls: "journal-cal-today-btn",
-			text: "📍 Today",
+			text: "📍 today",
 		});
 		todayBtn.addEventListener("click", () => {
 			this.currentMonth = new Date();
@@ -193,11 +195,11 @@ export class JournalCalendarView extends ItemView {
 				await this.plugin.openJournalForDate(clickedDate);
 			};
 
-			dayNum.addEventListener("click", openJournal);
-			dayNum.addEventListener("keydown", async (e) => {
+			dayNum.addEventListener("click", () => { void openJournal(); });
+			dayNum.addEventListener("keydown", (e) => {
 				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault();
-					await openJournal();
+					void openJournal();
 				}
 			});
 		}
@@ -304,7 +306,7 @@ export class JournalCalendarView extends ItemView {
 				const frontmatter = cache?.frontmatter;
 
 				if (frontmatter && typeof frontmatter === "object") {
-					const mood = frontmatter["mood"];
+					const mood: unknown = frontmatter["mood"];
 					if (typeof mood === "string" && mood.trim().length > 0) {
 						const firstChar = mood.charAt(0);
 						if (firstChar && /[\p{Emoji}]/u.test(firstChar)) {

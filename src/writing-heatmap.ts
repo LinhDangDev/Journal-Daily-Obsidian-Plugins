@@ -29,7 +29,7 @@ export class WritingHeatmap {
 			wrapper.addClass(`heatmap-${this.settings.heatmapColorTheme}`);
 		}
 
-		wrapper.createEl("h3", { text: "📊 Writing Activity" });
+		wrapper.createDiv({ text: "📊 Writing activity", cls: "journal-section-heading journal-section-subheading" });
 
 		// Compute data for last 365 days
 		const data = this.getYearData();
